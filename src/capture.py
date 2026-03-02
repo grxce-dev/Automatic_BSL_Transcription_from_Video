@@ -64,7 +64,7 @@ while True:
 
         # Automatically number files
         file_count = len(os.listdir(SAVE_FOLDER))
-        filename = f"sample_{file_count}.npy"
+        filename = f"version_{file_count}.npy"
         filepath = os.path.join(SAVE_FOLDER, filename)
 
         np.save(filepath, sequence_array)
