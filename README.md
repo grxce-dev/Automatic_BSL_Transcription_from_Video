@@ -22,3 +22,12 @@ python src/train.py
 
 6. How to Predict
 python src/predict.py
+
+# Requirements:
+numpy==1.26.4
+opencv-python==4.11.0.86
+opencv-contrib-python==4.11.0.86
+mediapipe==0.10.32
+tensorflow==2.20.0
+pytest==9.0.2
+sounddevice==0.5.5

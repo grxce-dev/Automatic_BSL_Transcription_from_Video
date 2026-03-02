@@ -1,6 +1,5 @@
 # Responsible for: Webcam, MediaPipe, Extract landmarks, Save .npy sequences
 
-
 import cv2
 import mediapipe as mp
 from mediapipe.tasks import python
@@ -12,8 +11,8 @@ SEQUENCE_LENGTH = 30
 sequence = []
 
 # Save frames into .npy file in folder of choice
-SAVE_FOLDER = "data/_good"
-os.makedir(SAVE_FOLDER, exist_ok = True)
+SAVE_FOLDER = "data/GOOD"
+os.makedirs(SAVE_FOLDER, exist_ok = True)
 
 # Load model
 base_options = python.BaseOptions(
@@ -56,13 +55,29 @@ while True:
 
     sequence.append(frame_features)
 
+# Create numpy array, create filename, save and reset
     if len(sequence) == SEQUENCE_LENGTH:
         print("Captured 30 frames!")
-        print(frame_features)
+        #print(frame_features)
+
+        sequence_array = np.array(sequence)   # (30, 126)
+
+        # Automatically number files
+        file_count = len(os.listdir(SAVE_FOLDER))
+        filename = f"sample_{file_count}.npy"
+        filepath = os.path.join(SAVE_FOLDER, filename)
+
+        np.save(filepath, sequence_array)
+
+        print(f"Saved to {filepath}")
+        print("Shape:", sequence_array.shape)
+
+        sequence = []   # Reset for next recording
+
+        # REMOVE BREAK AFTER TESTING
         break
 
-    print("Sequence length:", len(sequence))
-
+    #print("Sequence length:", len(sequence))
     #print("Hands detected:", len(result.hand_landmarks))
 
     cv2.imshow("Webcam", frame)
