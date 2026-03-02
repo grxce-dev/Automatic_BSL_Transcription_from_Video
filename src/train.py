@@ -1,0 +1,1 @@
+# Responsible for: Build LSTM model, Train model, Save model to models, 

@@ -1,0 +1,1 @@
+# Responsible for: Load trained model, Run real-time inference, Display prediction

@@ -1,0 +1,1 @@
+# Responsible for: Loading .npy files, Normalisation, Padding / reshaping, Creating X and y arrays
