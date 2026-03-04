@@ -3,7 +3,6 @@
 import os
 import numpy as np
 from sklearn.model_selection import train_test_split
-
 from tensorflow import keras
 from keras.layers import Dense
 from keras.models import Sequential
@@ -70,10 +69,6 @@ print("Dataset shape:", X.shape)   # Should be (samples, 35, 126)
 
 # NORMALISATION 
 def normalize_data(X):
-    """
-    Standardise each sequence independently.
-    Reduces scale and position bias.
-    """
     mean = np.mean(X, axis=(1, 2), keepdims=True)
     std = np.std(X, axis=(1, 2), keepdims=True) + 1e-8
     return (X - mean) / std
@@ -120,12 +115,11 @@ early_stop = EarlyStopping(
     restore_best_weights=True
 )
 
-
 # TRAIN MODEL
 history = model.fit(
     X_train,
     y_train,
-    epochs=40,
+    epochs=30,
     batch_size=16,
     validation_data=(X_test, y_test),
     callbacks=[early_stop]
@@ -136,10 +130,9 @@ loss, accuracy = model.evaluate(X_test, y_test)
 print("Final Test Accuracy:", accuracy)
 
 # SAVE MODEL
-#SAVE_FOLDER = "models"
-os.makedirs(model, exist_ok = True)
-#file_count = len(os.listdir(SAVE_FOLDER))
-#model.save(f"models/bsl_multiclass_model_{file_count}.h5")
-model.save("models/bsl_multiclass_model.h5")
+SAVE_FOLDER = "models"
+#os.makedirs(model, exist_ok = True)
+file_count = len(os.listdir(SAVE_FOLDER))
+model.save(f"models/bsl_multiclass_model_{file_count}.h5")
 
 print("Model saved to models")
