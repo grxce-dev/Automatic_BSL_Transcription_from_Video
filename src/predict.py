@@ -107,7 +107,7 @@ model = Sequential([
 # COMPILE MODEL
 model.compile(
     optimizer="adam",
-    loss="categorical_crossentropy",   # Required for multi-class
+    loss="categorical_crossentropy",   # multi-class
     metrics=["accuracy"]
 )
 
@@ -136,7 +136,8 @@ loss, accuracy = model.evaluate(X_test, y_test)
 print("Final Test Accuracy:", accuracy)
 
 # SAVE MODEL
-os.makedirs("models", exist_ok=True)
-model.save("models/bsl_multiclass_model.h5")
-
-print("Model saved to models/bsl_multiclass_model.h5")
+SAVE_FOLDER = "models/"
+os.makedirs(SAVE_FOLDER, exist_ok = True)
+file_count = len(os.listdir(SAVE_FOLDER))
+model.save(f"models/bsl_multiclass_model_{file_count}.h5")
+print("Model saved")
