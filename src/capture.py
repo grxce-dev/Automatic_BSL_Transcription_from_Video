@@ -7,11 +7,13 @@ from mediapipe.tasks.python import vision
 import numpy as np
 import os
 
-SEQUENCE_LENGTH = 30
+SEQUENCE_LENGTH = 35
 sequence = []
 
+recording = False
+
 # Save frames into .npy file in folder of choice
-SAVE_FOLDER = "data/GOOD"
+SAVE_FOLDER = "data/GOOD/RH"
 os.makedirs(SAVE_FOLDER, exist_ok = True)
 
 # Load model
@@ -34,56 +36,64 @@ while True:
         break
 
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
     mp_image = mp.Image(
-        image_format = mp.ImageFormat.SRGB,
-        data = rgb
+        image_format=mp.ImageFormat.SRGB,
+        data=rgb
     )
 
     result = detector.detect(mp_image)
 
-    frame_features = []
+    # cv2.imshow("Webcam", frame)
 
-    if result.hand_landmarks:
-        for hand in result.hand_landmarks:
-            for landmark in hand:
-                frame_features.extend([landmark.x, landmark.y, landmark.z])
+    key = cv2.waitKey(1) & 0xFF
 
-    # If only one hand detected, pad with zeros for second hand
-    while len(frame_features) < 126:
-        frame_features.append(0)
+    # Press 's' to start recording
+    if key == ord("s") and not recording:
+        print("Recording started")
+        recording = True
+        sequence = []
 
-    sequence.append(frame_features)
-
-# Create numpy array, create filename, save and reset
-    if len(sequence) == SEQUENCE_LENGTH:
-        print("Captured 30 frames!")
-        #print(frame_features)
-
-        sequence_array = np.array(sequence)   # (30, 126)
-
-        # Automatically number files
-        file_count = len(os.listdir(SAVE_FOLDER))
-        filename = f"version_{file_count}.npy"
-        filepath = os.path.join(SAVE_FOLDER, filename)
-
-        np.save(filepath, sequence_array)
-
-        print(f"Saved to {filepath}")
-        print("Shape:", sequence_array.shape)
-
-        sequence = []   # Reset for next recording
-
-        # REMOVE BREAK AFTER TESTING
+    # Press 'q' to quit
+    if key == ord("q"):
         break
 
-    #print("Sequence length:", len(sequence))
-    #print("Hands detected:", len(result.hand_landmarks))
+    # If recording append frame (even if detection fails)
+    if recording:
 
+        frame_features = []
+
+        if result.hand_landmarks:
+            for hand in result.hand_landmarks:
+                for landmark in hand:
+                    frame_features.extend([landmark.x, landmark.y, landmark.z])
+
+        # Pad to 126 features (2 hands max)
+        while len(frame_features) < 126:
+            frame_features.append(0)
+
+        sequence.append(frame_features)
+
+        print("Frames:", len(sequence))
+
+        if len(sequence) == SEQUENCE_LENGTH:
+            recording = False
+            print("Captured 35 frames!")
+
+            sequence_array = np.array(sequence)
+
+            file_count = len(os.listdir(SAVE_FOLDER))
+            filename = f"file_{file_count}.npy"
+            filepath = os.path.join(SAVE_FOLDER, filename)
+
+            np.save(filepath, sequence_array)
+
+            # Testing - quality control
+            print(f"Saved to {filepath}")
+            print("Shape:", sequence_array.shape)
+    
     cv2.imshow("Webcam", frame)
 
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
-
 cap.release()
 cv2.destroyAllWindows()
