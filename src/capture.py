@@ -13,7 +13,7 @@ sequence = []
 recording = False
 
 # Save frames into .npy file in folder of choice
-SAVE_FOLDER = "data/GOOD/RH"
+SAVE_FOLDER = "data/GOOD/BH"
 os.makedirs(SAVE_FOLDER, exist_ok = True)
 
 # Load model
