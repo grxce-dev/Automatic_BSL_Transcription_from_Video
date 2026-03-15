@@ -14,7 +14,7 @@ NUM_FEATURES = 126
 DATA_PATH = "data"
 MODEL_PATH = "models/bsl_multiclass_model.h5"
 
-CONFIDENCE_THRESHOLD =  0.0 # 0.80
+CONFIDENCE_THRESHOLD =  0.3 # 0.80
 SMOOTHING_WINDOW =  1 # 5
 
 model = load_model(MODEL_PATH)
