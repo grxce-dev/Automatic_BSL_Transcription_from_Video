@@ -79,13 +79,12 @@ while True:
     if len(sequence) == SEQUENCE_LENGTH:
 
         input_data = np.array(sequence)
+        input_data = np.expand_dims(input_data, axis=0)  # Shape = (1, 35, 126)
 
         # Standardise (same as training)
-        mean = np.mean(input_data)
-        std = np.std(input_data) + 1e-8
+        mean = np.mean(input_data, axis=(1, 2), keepdims=True)
+        std = np.std(input_data, axis=(1,2), keepdims=True) + 1e-8
         input_data = (input_data - mean) / std
-
-        input_data = np.expand_dims(input_data, axis=0)
 
         prediction = model.predict(input_data, verbose=0)
         predicted_index = np.argmax(prediction)
