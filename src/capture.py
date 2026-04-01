@@ -1,4 +1,8 @@
-# Responsible for: Webcam, MediaPipe, Extract landmarks, Save .npy sequences
+# Capture landmarks
+# ----------------------------
+# Input: Webcam
+# Output: 
+# ----------------------------
 
 import cv2
 import mediapipe as mp
@@ -9,7 +13,6 @@ import os
 
 SEQUENCE_LENGTH = 35
 sequence = []
-
 recording = False
 
 # Save frames into .npy file in folder of choice
@@ -38,13 +41,10 @@ while True:
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     mp_image = mp.Image(
         image_format=mp.ImageFormat.SRGB,
-        data=rgb
+        data = rgb
     )
 
     result = detector.detect(mp_image)
-
-    # cv2.imshow("Webcam", frame)
-
     key = cv2.waitKey(1) & 0xFF
 
     # Press 's' to start recording
@@ -59,26 +59,38 @@ while True:
 
     # If recording append frame (even if detection fails)
     if recording:
-
         frame_features = []
 
-        if result.hand_landmarks:
-            for hand in result.hand_landmarks:
-                for landmark in hand:
-                    frame_features.extend([landmark.x, landmark.y, landmark.z])
+        if result.hand_landmarks and result.handedness:
+            for i, hand in enumerate(result.hand_landmarks):
+                label = result.handedness[i][0].category_name
+                offset = 0 if label == "Left" else 63
 
+                wrist = hand[0]
+
+                for j, landmark in enumerate(hand):
+                    base = offset + j * 3
+                    frame_features[base:base] = [
+                        landmark.x - wrist.x,    # Normalisation relative to wrist
+                        landmark.y - wrist.y,
+                        landmark.z - wrist.z
+                    ]
+                    
         # Pad to 126 features (2 hands max)
         while len(frame_features) < 126:
             frame_features.append(0)
 
-        sequence.append(frame_features)
+        #if len(sequence) > 0:
+        #    prev = sequence[-1]
+        #    velocity = np.array(frame_features) - np.array(prev)
+        #    frame_features = np.concatenate([frame_features, velocity]) 
+        # NUM_FEATURES = 252
 
+        sequence.append(frame_features)
         print("Frames:", len(sequence))
 
         if len(sequence) == SEQUENCE_LENGTH:
             recording = False
-            print("Captured 35 frames!")
-
             sequence_array = np.array(sequence)
 
             file_count = len(os.listdir(SAVE_FOLDER))
@@ -90,10 +102,10 @@ while True:
             # Testing - quality control
             print(f"Saved to {filepath}")
             print("Shape:", sequence_array.shape)
-    
-    cv2.imshow("Webcam", frame)
 
+    cv2.imshow("Recording", frame)
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
+
 cap.release()
 cv2.destroyAllWindows()

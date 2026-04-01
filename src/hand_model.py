@@ -1,3 +1,8 @@
+# Model hand landmarks
+# ----------------------------
+# Input: Hand Landmarks
+# Output: Good, Bad, ...
+# ----------------------------
 
 import os
 import cv2
