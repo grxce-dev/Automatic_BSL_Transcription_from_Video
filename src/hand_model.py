@@ -17,12 +17,20 @@ from mediapipe.tasks.python import vision
 SEQUENCE_LENGTH = 35
 NUM_FEATURES = 126
 DATA_PATH = "data"
-MODEL_PATH = "models/bsl_multiclass_model.h5"
+MODEL_PATH = "detection_model/bsl_multiclass_model.h5"
 
-CONFIDENCE_THRESHOLD =  0.3 # 0.80
-SMOOTHING_WINDOW =  1 # 5
+CONFIDENCE_THRESHOLD =  0.6
+SMOOTHING_WINDOW =  5
 
-model = load_model(MODEL_PATH)
+#model = load_model(MODEL_PATH)
+
+model = Sequential([
+    GRU(64, input_shape=(SEQUENCE_LENGTH, NUM_FEATURES)),
+    Dropout(0.5),
+    Dense(64, activation="relu"),
+    Dropout(0.4),
+    Dense(len(class_names), activation="softmax")
+])
 
 class_names = sorted([
     folder for folder in os.listdir(DATA_PATH)
@@ -76,8 +84,8 @@ while True:
     if len(sequence) > SEQUENCE_LENGTH:
         sequence.pop(0)
 
-    display_text = "..."
-
+    if confidence < CONFIDENCE_THRESHOLD:
+        display_text = "..."
 
     # PREDICT WHEN WINDOW FULL
 
