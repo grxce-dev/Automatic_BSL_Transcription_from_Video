@@ -13,6 +13,7 @@ import os
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
 
+# CONFIGURATION
 SEQUENCE_LENGTH = 35
 sequence = []
 recording = False

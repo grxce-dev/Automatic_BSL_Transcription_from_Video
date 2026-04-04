@@ -11,6 +11,7 @@ mp_face_mesh = mp.solutions.face_mesh
 SEQUENCE_LENGTH = 10
 important_points = [70, 63, 105, 66, 107]  # eyebrow
 
+# CONFIGURATION
 sequence = []
 recording = False
 

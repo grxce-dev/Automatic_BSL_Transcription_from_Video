@@ -1,10 +1,15 @@
-# Responsible for: Load trained model, Run real-time inference, Display prediction
+# Responsible for: Load dataset, train model, evaluate, save model
+
+""" Load saved gesture data (.npy)
+→ Turn into dataset (X, y)
+→ Train neural network (LSTM)
+→ Evaluate it
+→ Save trained model """
 
 import os
 import numpy as np
 from sklearn.model_selection import train_test_split
 from tensorflow import keras
-from keras.layers import Dense
 from keras.models import Sequential
 from keras.layers import LSTM, Dense, Dropout
 from keras.utils import to_categorical
@@ -30,13 +35,15 @@ def load_data():
     # Sort for consistent ordering
     class_names.sort()
 
-    # Map class name to an integer label
+    # Map class name to an integer label (CREATES LABEL MAP)
     label_map = {name: idx for idx, name in enumerate(class_names)}
 
     # TESTING
     print("Class names:", class_names)
     print("Label map:", label_map)
 
+    np.save("models/class_names.npy", class_names)
+    
     # Now load each sequence
     for class_name in class_names:
         class_path = os.path.join(DATA_PATH, class_name)
@@ -52,7 +59,7 @@ def load_data():
                     filepath = os.path.join(variation_path, file)
                     sequence = np.load(filepath)
 
-                    # Ensure correct shape
+                    # Ensure correct shape (STORE DATA)
                     if sequence.shape == (SEQUENCE_LENGTH, NUM_FEATURES):
                         X.append(sequence)
                         y.append(label_map[class_name])
@@ -78,12 +85,9 @@ X = normalize_data(X)
 # HOT ENCODE LABELS (Multi-class format)
 y = to_categorical(y, num_classes=len(class_names))
 
-# TRAIN / TEST SPLIT
+# TRAIN / TEST SPLIT (CURRENTLY: 80/20)
 X_train, X_test, y_train, y_test = train_test_split(
-    X,
-    y,
-    test_size=0.2,
-    random_state=42
+    X, y, test_size = 0.2, random_state = 42
 )
 
 print("Training samples:", X_train.shape[0])
@@ -93,11 +97,10 @@ print("Test samples:", X_test.shape[0])
 model = Sequential([
     LSTM(32, input_shape=(SEQUENCE_LENGTH, NUM_FEATURES)),
     Dropout(0.4),                                      # Prevent overfitting
-    Dense(32, activation="relu"),                      # Dense decision layer
+    Dense(32, activation = "relu"),                      # Dense decision layer
     Dropout(0.3),
-    Dense(len(class_names), activation="softmax")      # Output layer (multi-class softmax)
+    Dense(len(class_names), activation = "softmax")      # Output layer (multi-class softmax)
 ])
-
 
 # COMPILE MODEL
 model.compile(
@@ -117,22 +120,30 @@ early_stop = EarlyStopping(
 
 # TRAIN MODEL
 history = model.fit(
-    X_train,
-    y_train,
+    X_train, y_train,
     epochs=30,
     batch_size=16,
     validation_data=(X_test, y_test),
-    callbacks=[early_stop]
+    callbacks=[early_stop],
+    shuffle = True
 )
 
 # EVALUATE MODEL
 loss, accuracy = model.evaluate(X_test, y_test)
 print("Final Test Accuracy:", accuracy)
 
+preds = model.predict(X_test)
+pred_labels = np.argmax(preds, axis=1)
+true_labels = np.argmax(y_test, axis=1)
+
+for i in range(10):
+    print("Pred:", class_names[pred_labels[i]],
+          "True:", class_names[true_labels[i]])
+
 # SAVE MODEL
 SAVE_FOLDER = "models"
-#os.makedirs(model, exist_ok = True)
+os.makedirs(SAVE_FOLDER, exist_ok = True)
 file_count = len(os.listdir(SAVE_FOLDER))
-model.save(f"models/bsl_multiclass_model_{file_count}.h5")
+model.save(f"models/detection_model/model_acc_{accuracy:.2f}.h5")
 
 print("Model saved to models")
