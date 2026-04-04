@@ -31,3 +31,18 @@ model = Sequential([
     Dropout(0.4),
     Dense(len(class_names), activation="softmax")
 ])
+
+
+BaseOptions = mp.tasks.BaseOptions
+FaceLandmarker = mp.tasks.vision.FaceLandmarker
+FaceLandmarkerOptions = mp.tasks.vision.FaceLandmarkerOptions
+VisionRunningMode = mp.tasks.vision.RunningMode
+
+# Create a face landmarker instance with the video mode:
+options = FaceLandmarkerOptions(
+    base_options=BaseOptions(model_asset_path=model_path),
+    running_mode=VisionRunningMode.VIDEO)
+
+#with FaceLandmarker.create_from_options(options) as landmarker:
+  # The landmarker is initialized. Use it here.
+  # ...
