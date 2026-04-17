@@ -1,8 +1,4 @@
-# Capture landmarks
-# ----------------------------
-# Input: Webcam
-# Output: 
-# ----------------------------
+# Capture hand landmarks
 
 import os
 import cv2
@@ -10,9 +6,6 @@ import numpy as np
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-
-mp_drawing = mp.solutions.drawing_utils
-mp_hands = mp.solutions.hands
 
 # CONFIGURATION
 SEQUENCE_LENGTH = 35
@@ -24,7 +17,7 @@ SAVE_FOLDER = "data"
 os.makedirs(SAVE_FOLDER, exist_ok = True)
 
 # Load models
-base_options_hands = python.BaseOptions(model_asset_path="models/mediapipe_model/hand_landmarker.task") 
+base_options_hands = python.BaseOptions(model_asset_path="models/hand_landmarker.task") 
 options_hands = vision.HandLandmarkerOptions(
     base_options = base_options_hands,
     num_hands = 2
@@ -34,6 +27,9 @@ hand_detector = vision.HandLandmarker.create_from_options(options_hands)
 
 # Start video capture
 cap = cv2.VideoCapture(0)
+
+frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 while True:
     ret, frame = cap.read()
@@ -49,9 +45,13 @@ while True:
     result = hand_detector.detect(mp_image)
     key = cv2.waitKey(1) & 0xFF
 
-    # Draw hands :)
+    # DRAW PINK DOTS <3
     for hand_landmarks in result.hand_landmarks:
-        mp_drawing.draw_landmarks( frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+        for landmark in hand_landmarks:
+            x = int(landmark.x * frame_width)
+            y = int(landmark.y * frame_height)
+            cv2.circle(frame, (x,y), 5,(255, 197, 211), -1)
+
 
     # Press 's' to start recording
     if key == ord("s") and not recording:
@@ -79,10 +79,10 @@ while True:
 
                 wrist = hand[0]
 
-                for j, landmark in enumerate(hand):
+                for j, landmark in enumerate(hand):  # Normalisation relative to wrist
                     base = offset + j * 3
                     frame_features[base:base+3] = [
-                        landmark.x - wrist.x,    # Normalisation relative to wrist
+                        landmark.x - wrist.x,    
                         landmark.y - wrist.y,
                         landmark.z - wrist.z
                     ]
