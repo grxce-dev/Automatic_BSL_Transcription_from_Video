@@ -75,7 +75,7 @@ while True:
     if result.hand_landmarks:
         sequence.append(frame_features)
     
-    # if no sign: clean and display ...
+    # if no sign: clean and display '...'
     if not result.hand_landmarks:
         prediction_history.clear()
         sequence = []
