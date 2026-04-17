@@ -1,8 +1,4 @@
 # Model hand landmarks
-# ----------------------------
-# Input: Hand Landmarks
-# Output: Good, Bad, ...
-# ----------------------------
 
 import os
 import cv2
@@ -14,26 +10,20 @@ from keras.models import load_model
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-mp_drawing = mp.solutions.drawing_utils
-mp_hands = mp.solutions.hands
-
-# -------------------------------------------
-
-# CONFIGURATION
+# Configuration
 SEQUENCE_LENGTH = 35
 NUM_FEATURES = 126
-
 CONFIDENCE_THRESHOLD =  0.6
 SMOOTHING_WINDOW =  5
 
-# PATHS
+# Paths
 DATA_PATH = "data"
 MODEL_PATH = "detection_model/bsl_multiclass_model.h5"
 
-# LOAD MODEL
+# Load Model
 model = load_model(MODEL_PATH)
 
-# MEDIAPIPE SETUP - HANDS
+# MediaPipe Setuup - Hands
 base_options = python.BaseOptions( model_asset_path="data/hand_landmarker.task")
 options = vision.HandLandmarkerOptions( base_options = base_options, num_hands = 2)
 detector = vision.HandLandmarker.create_from_options(options)

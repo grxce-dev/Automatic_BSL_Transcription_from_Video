@@ -48,10 +48,14 @@ while True:
 
     # DRAW PINK DOTS <3
     for face_landmarks in result.face_landmarks:
-        for landmark in face_landmarks:
-            x = int(landmark.x * frame_width)
-            y = int(landmark.y * frame_height)
-            cv2.circle(frame, (x,y), 5,(255, 197, 211), -1)
+
+        h, w, _ = frame.shape
+        indices = [1, 468, 473] # Nose = 1, Left eye centre = 468, Right eye centre = 473
+        
+        for idx in indices:
+            landmark = face_landmarks[idx]
+            cx, cy = int(landmark.x * w), int(landmark.y * h)
+            cv2.circle(frame, (cx,cy), 5,(255, 197, 211), -1)
 
     # Press 's' to start recording
     if key == ord("s") and not recording:
@@ -68,23 +72,27 @@ while True:
 
         frame_features = [0,0]
 
-        if result.detections:
-            detection = result.detections[0]
+        if result.face_landmarks:
+            
+            face = result.face_landmarks[0]
 
-            bounding_box = detection.location_data.relative_bounding_box
-            face_x, face_y = bounding_box.xmin, bounding_box.ymin
-            face_w, face_h = bounding_box.width, bounding_box.height
+            nose = face[1]
+            left_eye = face[468]
+            right_eye = face[473]
 
-            nose_tip = mp_face_detection.get_key_point(detection, mp_face_detection.FaceKeyPoint.NOSE_TIP)
-            nose_x, nose_y = nose_tip.x, nose_tip.y
+            eye_centre_x = (left_eye.x + right_eye.x) / 2
+            eye_centre_y = (left_eye.y + right_eye.y) / 2
 
-            nose_rel_x = (nose_x - face_x) / face_w
-            nose_rel_y = (nose_y - face_y) / face_h
+            eye_dist = ((
+                (left_eye.x - right_eye.x) **2 + 
+                (left_eye.y - right_eye.y) **2)
+                **0.5)
 
-            frame_features = [nose_rel_x, nose_rel_y]
+            if eye_dist > 0:
+                nose_rel_x = (nose.x - eye_centre_x) / eye_dist
+                nose_rel_y = (nose.y - eye_centre_y) / eye_dist
 
-        else:
-            frame_features = [0,0]
+                frame_features = [nose_rel_x, nose_rel_y]
 
         sequence.append(frame_features)
         print("Frames:", len(sequence))
