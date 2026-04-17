@@ -13,10 +13,10 @@ sequence = []
 recording = False
 
 # Save frames into .npy file in folder of choice
-SAVE_FOLDER = "data"
+SAVE_FOLDER = "data/hand"
 os.makedirs(SAVE_FOLDER, exist_ok = True)
 
-# Load models
+# Load model
 base_options_hands = python.BaseOptions(model_asset_path="models/hand_landmarker.task") 
 options_hands = vision.HandLandmarkerOptions(
     base_options = base_options_hands,
@@ -51,7 +51,6 @@ while True:
             x = int(landmark.x * frame_width)
             y = int(landmark.y * frame_height)
             cv2.circle(frame, (x,y), 5,(255, 197, 211), -1)
-
 
     # Press 's' to start recording
     if key == ord("s") and not recording:

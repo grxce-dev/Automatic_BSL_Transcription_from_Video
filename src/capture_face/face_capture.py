@@ -1,26 +1,24 @@
+# Capture face landmarks
+
+import os
 import cv2
+import numpy as np
 import mediapipe as mp
+
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-import numpy as np
-import os
-
-mp_drawing = mp.solutions.drawing_utils
-mp_face_mesh = mp.solutions.face_mesh
-
-SEQUENCE_LENGTH = 10
-important_points = [70, 63, 105, 66, 107]  # eyebrow
 
 # CONFIGURATION
+SEQUENCE_LENGTH = 10
 sequence = []
 recording = False
 
 # Save frames into .npy file in folder of choice
-SAVE_FOLDER = "data/FACE"
+SAVE_FOLDER = "data/face"
 os.makedirs(SAVE_FOLDER, exist_ok = True)
 
-# load model
-base_options_face = python.BaseOptions(model_asset_path="models/mediapipe_model/face_landmarker.task" )
+# Load model
+base_options_face = python.BaseOptions(model_asset_path="models/face_landmarker.task" )
 options_face = vision.FaceLandmarkerOptions(
     base_options = base_options_face,
     num_faces = 1
@@ -30,6 +28,9 @@ face_detector = vision.FaceLandmarker.create_from_options(options_face)
 
 # Start video capture
 cap = cv2.VideoCapture(0)
+
+frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 while True:
     ret, frame = cap.read()
@@ -45,6 +46,13 @@ while True:
     result = face_detector.detect(mp_image)
     key = cv2.waitKey(1) & 0xFF
 
+    # DRAW PINK DOTS <3
+    for face_landmarks in result.face_landmarks:
+        for landmark in face_landmarks:
+            x = int(landmark.x * frame_width)
+            y = int(landmark.y * frame_height)
+            cv2.circle(frame, (x,y), 5,(255, 197, 211), -1)
+
     # Press 's' to start recording
     if key == ord("s") and not recording:
         print("Recording started")
@@ -55,27 +63,28 @@ while True:
     if key == ord("q"):
         break
 
-    if result.face_landmarks:
-        for face_landmarks in result.face_landmarks:
-            mp_drawing.draw_landmarks(frame, face_landmarks, mp_face_mesh.FACEMESH_TESSELATION )
-
     # If recording append frame (even if detection fails)
     if recording:
-        frame_features = [0] * (len(important_points) * 2)
-        if result.face_landmarks:
-            face = result.face_landmarks[0]
 
-            reference = face[1] # nose tip reference point (more stable)
+        frame_features = [0,0]
 
-            for idx, point in enumerate(important_points):
-                landmark = face[point]
-                base = idx * 2
+        if result.detections:
+            detection = result.detections[0]
 
-                frame_features[base:base+2] = [
-                    landmark.x - reference.x,
-                    landmark.y - reference.y
-                ]
+            bounding_box = detection.location_data.relative_bounding_box
+            face_x, face_y = bounding_box.xmin, bounding_box.ymin
+            face_w, face_h = bounding_box.width, bounding_box.height
 
+            nose_tip = mp_face_detection.get_key_point(detection, mp_face_detection.FaceKeyPoint.NOSE_TIP)
+            nose_x, nose_y = nose_tip.x, nose_tip.y
+
+            nose_rel_x = (nose_x - face_x) / face_w
+            nose_rel_y = (nose_y - face_y) / face_h
+
+            frame_features = [nose_rel_x, nose_rel_y]
+
+        else:
+            frame_features = [0,0]
 
         sequence.append(frame_features)
         print("Frames:", len(sequence))
@@ -90,10 +99,6 @@ while True:
             filepath = os.path.join(SAVE_FOLDER, filename)
 
             np.save(filepath, sequence_array)
-
-            # Testing - quality control
-            #print(f"Saved to {filepath}")
-            #print("Shape:", sequence_array.shape)
 
     cv2.imshow("Recording", frame)
     if cv2.waitKey(1) & 0xFF == ord("q"):
