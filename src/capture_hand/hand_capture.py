@@ -4,11 +4,12 @@
 # Output: 
 # ----------------------------
 
+import os
 import cv2
+import numpy as np
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-import os
 
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
@@ -19,7 +20,7 @@ sequence = []
 recording = False
 
 # Save frames into .npy file in folder of choice
-SAVE_FOLDER = "data/HANDS/BAD/RH"
+SAVE_FOLDER = "data"
 os.makedirs(SAVE_FOLDER, exist_ok = True)
 
 # Load models
@@ -99,10 +100,6 @@ while True:
             filepath = os.path.join(SAVE_FOLDER, filename)
 
             np.save(filepath, sequence_array)
-
-            # Testing - quality control
-            #print(f"Saved to {filepath}")
-            #print("Shape:", sequence_array.shape)
 
     cv2.imshow("Recording", frame)
     if cv2.waitKey(1) & 0xFF == ord("q"):
