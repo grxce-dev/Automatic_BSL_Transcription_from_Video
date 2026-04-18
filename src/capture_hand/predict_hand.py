@@ -10,12 +10,12 @@ from keras.layers import LSTM, Dense, Dropout
 from keras.utils import to_categorical
 from keras.callbacks import EarlyStopping
 
-# Configuration
+# ── CONFIGURATION ─────────────────────────────────────────────────────────---─────
 data_path= 'data/hand'         
 sequence_length = 35        
 num_features = 126          # 2 hands × 21 landmarks × (x,y,z)
 
-# Load Data
+# ── LOAD DATA ──────────────────────────────────────────────────────────--------────
 def load_data():
     X = []                  # store sequences
     y = []                  # store numeric labels
@@ -56,7 +56,7 @@ def load_data():
 
     return np.array(X), np.array(y), class_names
 
-# Load dataset
+# ── LOAD DATASET ───────────────────────────────────────────────────────────-----───
 X, y, class_names = load_data()
  
 print("Detected classes:", class_names)
@@ -68,7 +68,7 @@ if len(X) == 0:
 #print("Detected classes:", class_names)
 #print("Dataset shape:", X.shape) 
 
-# Normalisation 
+# ── NORMALISATION ───────────────────────────────────────────────────────────----───
 def normalize_data(X):
     mean = np.mean(X, axis=(1, 2), keepdims=True)
     std = np.std(X, axis=(1, 2), keepdims=True) + 1e-8
@@ -76,17 +76,18 @@ def normalize_data(X):
 
 X = normalize_data(X)
 
+# HOT ENCODE CLASS NAMES
 y = to_categorical(y, num_classes=len(class_names))
 
-# TRAIN / TEST SPLIT (CURRENTLY: 80/20)
+# ── TRAIN / TEST SPLIT (CURRENTLY: 80/20) ─────────────────────────────────────────
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size = 0.2, random_state = 42
 )
 
-# Build LSTM Model
+# ── BUILD LSTM MODEL ──────────────────────────────────────────────────────────────
 model = Sequential([
     LSTM(32, input_shape=(sequence_length, num_features)),
-    Dropout(0.4),                                      # Prevent overfitting
+    Dropout(0.4),                                        # Prevent overfitting
     Dense(32, activation = "relu"),                      # Dense decision layer
     Dropout(0.3),
     Dense(len(class_names), activation = "softmax")      # Output layer (multi-class softmax)
@@ -94,20 +95,20 @@ model = Sequential([
 
 model.compile(
     optimizer="adam",
-    loss="categorical_crossentropy",   # Required for multi-class
+    loss="categorical_crossentropy",
     metrics=["accuracy"]
 )
 
 model.summary()
 
-# Early Stopping
+# ── EARLY STOPPING ─────────────────────────────────────────────────────--─────────
 early_stop = EarlyStopping(
     monitor="val_loss",
     patience=5,
     restore_best_weights=True
 )
 
-# Train Model
+# ── TRAIN MODEL ──────────────────────────────────────────────────────----────────
 history = model.fit(
     X_train, y_train,
     epochs = 30,
@@ -117,7 +118,7 @@ history = model.fit(
     shuffle = True
 )
 
-# Evaluate Model
+# ── EVALUATE MODEL ──────────────────────────────────────────────────────────────
 loss, accuracy = model.evaluate(X_test, y_test)
 print("Final Test Accuracy:", accuracy)
 
@@ -129,7 +130,7 @@ for i in range(10):
     print("Pred:", class_names[pred_labels[i]],
           "True:", class_names[true_labels[i]])
 
-# Save Model
+# ── SAVE MODEL ────────────────────────────────────────────────────-----──────────
 #SAVE_FOLDER = "models"
 os.makedirs("models", exist_ok = True)
 file_count = len(os.listdir("models"))

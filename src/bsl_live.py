@@ -1,5 +1,5 @@
-# main.py
-
+# bsl_live.py — Parallel hand + face inference for BSL live captioning
+ 
 import os
 import cv2
 import numpy as np
@@ -9,35 +9,19 @@ from collections import deque, Counter
 from keras.models import load_model
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-
-# load BOTH models at the start
+ 
+# ── CONFIGURATION ──────────────────────────────────────────────────────────────
+hand_sequence_length = 35
+hand_num_features    = 126   # 2 hands × 21 landmarks × (x, y, z)
+ 
+face_sequence_length  = 10
+face_num_features     = 2     # nose_rel_x, nose_rel_y
+ 
+confidence_threshold  = 0.6
+smoothing_window      = 5
+ 
+# ── LOAD MODELS ────────────────────────────────────────────────────────────────
 hand_model = load_model("models/hand_model.h5")
 face_model = load_model("models/face_model.h5")
-
-# setup BOTH mediapipe detectors
-hand_detector = ...
-face_detector = ...
-
-# separate sequences for each
-hand_sequence = []
-face_sequence = []
-last_face_prediction = "NEUTRAL"
-
-while True:
-    ret, frame = cap.read()
-    
-    # --- HAND DETECTION (same logic as hand_model.py) ---
-    # detect, build frame_features, append to hand_sequence
-    # if len(hand_sequence) == 35: predict, get hand_result
-    
-    # --- FACE DETECTION (same logic as face_model.py) ---  
-    # detect, build frame_features, append to face_sequence
-    # if len(face_sequence) == 10: predict, update last_face_prediction
-    
-    # --- DECISION LAYER ---
-    # if hand_result == "UNDERSTAND":
-    #     check last_face_prediction, output accordingly
-    # else:
-    #     display hand_result directly
-    
-    cv2.imshow(...)
+ 
+ 
