@@ -85,8 +85,8 @@ while True:
 
             eye_dist = ((
                 (left_eye.x - right_eye.x) **2 + 
-                (left_eye.y - right_eye.y) **2)
-                **0.5)
+                (left_eye.y - right_eye.y) **2
+                ) **0.5)
 
             if eye_dist > 0:
                 nose_rel_x = (nose.x - eye_centre_x) / eye_dist

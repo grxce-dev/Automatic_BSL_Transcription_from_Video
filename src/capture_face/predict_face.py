@@ -1,13 +1,8 @@
-# Responsible for: Load dataset, train model, evaluate, save model
-
-""" Load saved gesture data (.npy)
-→ Turn into dataset (X, y)
-→ Train neural network (LSTM)
-→ Evaluate it
-→ Save trained model """
+# Predict Face Landmarks
 
 import os
 import numpy as np
+
 from sklearn.model_selection import train_test_split
 from tensorflow import keras
 from keras.models import Sequential
@@ -15,66 +10,64 @@ from keras.layers import LSTM, Dense, Dropout
 from keras.utils import to_categorical
 from keras.callbacks import EarlyStopping
 
-DATA_PATH = "data"          
-SEQUENCE_LENGTH = 35        
-NUM_FEATURES = 126          # 2 hands × 21 landmarks × (x,y,z)
+# Configuration
+data_path = 'data/face'
+sequence_length = 35
+num_features = 2
 
-# LOAD DATA
+# Load Data
 def load_data():
-    X = []                  # store sequences
-    y = []                  # store numeric labels
-    class_names = []        # List of sign names
+    x = []
+    y = []
+    class_names = []
 
-    # Every top-level folder = one class
-    for folder in os.listdir(DATA_PATH):
-        folder_path = os.path.join(DATA_PATH, folder)
+    for folder in os.listdir(data_path):
+        folder_path = os.path.join(data_path, folder)
 
         if os.path.isdir(folder_path):
             class_names.append(folder)
 
-    # Sort for consistent ordering
     class_names.sort()
+    label_map = {name: index for index, name in enumerate(class_names)}
 
-    # Map class name to an integer label (CREATES LABEL MAP)
-    label_map = {name: idx for idx, name in enumerate(class_names)}
+    np.save("models/face_class_names.py", class_names)
 
-    # TESTING
-    print("Class names:", class_names)
-    print("Label map:", label_map)
-
-    np.save("models/class_names.npy", class_names)
-    
-    # Now load each sequence
+    # Load each sequence
     for class_name in class_names:
-        class_path = os.path.join(DATA_PATH, class_name)
+        class_path = os.path.join(data_path, class_name)
 
         for variation in os.listdir(class_path):
             variation_path = os.path.join(class_path, variation)
 
-            if not os.path.isdir(variation_path):
+            if not os.path.isdir(variation):
                 continue
 
-            for file in os.listdir(variation_path):
-                if file.endswith(".npy"):
-                    filepath = os.path.join(variation_path, file)
-                    sequence = np.load(filepath)
+        for file in os.listdir(variation_path):
+            if file.endswith(".npy"):
+                filepath = os.path.join(variation_path, file)
+                sequence = np.load(filepath)
 
-                    # Ensure correct shape (STORE DATA)
-                    if sequence.shape == (SEQUENCE_LENGTH, NUM_FEATURES):
-                        X.append(sequence)
-                        y.append(label_map[class_name])
-                    else:
-                        print("Skipped:", file, "Shape:", sequence.shape)
+                if sequence.shape == (sequence_length, num_features):
+                    X.append(sequence)
+                    y.append(label_map[class_name])
+                else:
+                    print("Skipped:", file, "Shape:", sequence.shape)
 
     return np.array(X), np.array(y), class_names
 
 # Load dataset
 X, y, class_names = load_data()
-
+ 
 print("Detected classes:", class_names)
-print("Dataset shape:", X.shape)   # Should be (samples, 35, 126)
+print("Dataset shape:",    X.shape)   # (samples, 10, 2)
+ 
+if len(X) == 0:
+    raise ValueError("No data found — check DATA_PATH and that .npy files exist.")
 
-# NORMALISATION 
+#print("Detected classes:", class_names)
+#print("Dataset shape:", X.shape) 
+
+# Normalisation
 def normalize_data(X):
     mean = np.mean(X, axis=(1, 2), keepdims=True)
     std = np.std(X, axis=(1, 2), keepdims=True) + 1e-8
@@ -82,7 +75,6 @@ def normalize_data(X):
 
 X = normalize_data(X)
 
-# HOT ENCODE LABELS (Multi-class format)
 y = to_categorical(y, num_classes=len(class_names))
 
 # TRAIN / TEST SPLIT (CURRENTLY: 80/20)
@@ -90,19 +82,15 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size = 0.2, random_state = 42
 )
 
-print("Training samples:", X_train.shape[0])
-print("Test samples:", X_test.shape[0])
-
-# BUILD LSTM MODEL
+# Build LSTM Model
 model = Sequential([
-    LSTM(32, input_shape=(SEQUENCE_LENGTH, NUM_FEATURES)),
+    LSTM(32, input_shape=(sequence_length, num_features)),
     Dropout(0.4),                                      # Prevent overfitting
     Dense(32, activation = "relu"),                      # Dense decision layer
     Dropout(0.3),
     Dense(len(class_names), activation = "softmax")      # Output layer (multi-class softmax)
 ])
 
-# COMPILE MODEL
 model.compile(
     optimizer="adam",
     loss="categorical_crossentropy",   # Required for multi-class
@@ -111,24 +99,24 @@ model.compile(
 
 model.summary()
 
-# EARLY STOPPING (Prevents Overfitting)
+# Early Stopping
 early_stop = EarlyStopping(
     monitor="val_loss",
     patience=5,
     restore_best_weights=True
 )
 
-# TRAIN MODEL
+# Train Model
 history = model.fit(
     X_train, y_train,
-    epochs=30,
-    batch_size=16,
-    validation_data=(X_test, y_test),
-    callbacks=[early_stop],
+    epochs = 30,
+    batch_size = 16,
+    validation_data = (X_test, y_test),
+    callbacks = [early_stop],
     shuffle = True
 )
 
-# EVALUATE MODEL
+# Evaluate Model
 loss, accuracy = model.evaluate(X_test, y_test)
 print("Final Test Accuracy:", accuracy)
 
@@ -140,10 +128,9 @@ for i in range(10):
     print("Pred:", class_names[pred_labels[i]],
           "True:", class_names[true_labels[i]])
 
-# SAVE MODEL
-SAVE_FOLDER = "models"
-os.makedirs(SAVE_FOLDER, exist_ok = True)
-file_count = len(os.listdir(SAVE_FOLDER))
-model.save(f"models/detection_model/model_acc_{accuracy:.2f}.h5")
-
+# Save Model
+#save_folder = "models"
+os.makedirs("models", exist_ok = True)
+file_count = len(os.listdir("models"))
+model.save(f"models/model_acc_{accuracy:.2f}.h5")
 print("Model saved to models")
