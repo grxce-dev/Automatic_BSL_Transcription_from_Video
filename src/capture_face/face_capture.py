@@ -8,17 +8,17 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-# CONFIGURATION
-SEQUENCE_LENGTH = 10
+# Configuration
+sequence_length = 10
 sequence = []
 recording = False
 
 # Save frames into .npy file in folder of choice
-SAVE_FOLDER = "data/face"
-os.makedirs(SAVE_FOLDER, exist_ok = True)
+save_folder = "data/face"
+os.makedirs(save_folder, exist_ok = True)
 
 # Load model
-base_options_face = python.BaseOptions(model_asset_path="models/face_landmarker.task" )
+base_options_face = python.BaseOptions(model_asset_path = "models/face_landmarker.task" )
 options_face = vision.FaceLandmarkerOptions(
     base_options = base_options_face,
     num_faces = 1
@@ -46,14 +46,12 @@ while True:
     result = face_detector.detect(mp_image)
     key = cv2.waitKey(1) & 0xFF
 
-    # DRAW PINK DOTS <3
+    # Draw landmarks
     for face_landmarks in result.face_landmarks:
-
         h, w, _ = frame.shape
         indices = [1, 468, 473] # Nose = 1, Left eye centre = 468, Right eye centre = 473
-        
-        for idx in indices:
-            landmark = face_landmarks[idx]
+        for index in indices:
+            landmark = face_landmarks[index]
             cx, cy = int(landmark.x * w), int(landmark.y * h)
             cv2.circle(frame, (cx,cy), 5,(255, 197, 211), -1)
 
@@ -63,19 +61,19 @@ while True:
         recording = True
         sequence = []
 
+        cv2.putText(frame, "Recording...", (20, 100),
+        cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+
     # Press 'q' to quit
     if key == ord("q"):
         break
 
-    # If recording append frame (even if detection fails)
     if recording:
-
         frame_features = [0,0]
-
+        
         if result.face_landmarks:
             
             face = result.face_landmarks[0]
-
             nose = face[1]
             left_eye = face[468]
             right_eye = face[473]
@@ -98,13 +96,13 @@ while True:
         print("Frames:", len(sequence))
 
         # End recording and save
-        if len(sequence) == SEQUENCE_LENGTH:
+        if len(sequence) == sequence_length:
             recording = False
             sequence_array = np.array(sequence)
 
-            file_count = len(os.listdir(SAVE_FOLDER))
+            file_count = len(os.listdir(save_folder))
             filename = f"file_{file_count}.npy"
-            filepath = os.path.join(SAVE_FOLDER, filename)
+            filepath = os.path.join(save_folder, filename)
 
             np.save(filepath, sequence_array)
 

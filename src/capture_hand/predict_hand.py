@@ -10,12 +10,12 @@ from keras.layers import LSTM, Dense, Dropout
 from keras.utils import to_categorical
 from keras.callbacks import EarlyStopping
 
-# ── CONFIGURATION ─────────────────────────────────────────────────────────---─────
+# Configuration
 data_path= 'data/hand'         
 sequence_length = 35        
 num_features = 126          # 2 hands × 21 landmarks × (x,y,z)
 
-# ── LOAD DATA ──────────────────────────────────────────────────────────--------────
+# Load data
 def load_data():
     X = []                  # store sequences
     y = []                  # store numeric labels
@@ -56,35 +56,33 @@ def load_data():
 
     return np.array(X), np.array(y), class_names
 
-# ── LOAD DATASET ───────────────────────────────────────────────────────────-----───
+# Load dataset
 X, y, class_names = load_data()
  
 print("Detected classes:", class_names)
 print("Dataset shape:",    X.shape)   
  
 if len(X) == 0:
-    raise ValueError("No data found — check DATA_PATH and that .npy files exist.")
+    raise ValueError("No data found — check data path and that .npy files exist.")
  
 #print("Detected classes:", class_names)
 #print("Dataset shape:", X.shape) 
 
-# ── NORMALISATION ───────────────────────────────────────────────────────────----───
+# Normalisation
 def normalize_data(X):
-    mean = np.mean(X, axis=(1, 2), keepdims=True)
-    std = np.std(X, axis=(1, 2), keepdims=True) + 1e-8
+    mean = np.mean(X, axis = (1, 2), keepdims = True)
+    std  = np.std(X, axis = (1, 2), keepdims = True) + 1e-8
     return (X - mean) / std
 
 X = normalize_data(X)
 
-# HOT ENCODE CLASS NAMES
+# Hot encode class names
 y = to_categorical(y, num_classes=len(class_names))
 
-# ── TRAIN / TEST SPLIT (CURRENTLY: 80/20) ─────────────────────────────────────────
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size = 0.2, random_state = 42
-)
+# Train/Test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 42) # Currently 80/20
 
-# ── BUILD LSTM MODEL ──────────────────────────────────────────────────────────────
+# Build model
 model = Sequential([
     LSTM(32, input_shape=(sequence_length, num_features)),
     Dropout(0.4),                                        # Prevent overfitting
@@ -101,14 +99,14 @@ model.compile(
 
 model.summary()
 
-# ── EARLY STOPPING ─────────────────────────────────────────────────────--─────────
+# Early stopping to prevent overfitting
 early_stop = EarlyStopping(
     monitor="val_loss",
     patience=5,
     restore_best_weights=True
 )
 
-# ── TRAIN MODEL ──────────────────────────────────────────────────────----────────
+# Train model
 history = model.fit(
     X_train, y_train,
     epochs = 30,
@@ -118,7 +116,7 @@ history = model.fit(
     shuffle = True
 )
 
-# ── EVALUATE MODEL ──────────────────────────────────────────────────────────────
+# Evaluate model
 loss, accuracy = model.evaluate(X_test, y_test)
 print("Final Test Accuracy:", accuracy)
 
@@ -130,8 +128,7 @@ for i in range(10):
     print("Pred:", class_names[pred_labels[i]],
           "True:", class_names[true_labels[i]])
 
-# ── SAVE MODEL ────────────────────────────────────────────────────-----──────────
-#SAVE_FOLDER = "models"
+# Save model
 os.makedirs("models", exist_ok = True)
 file_count = len(os.listdir("models"))
 model.save(f"models/detection_model/model_acc_{accuracy:.2f}.h5")

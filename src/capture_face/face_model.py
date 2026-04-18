@@ -12,34 +12,59 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
 # Configuration
-SEQUENCE_LENGTH = 35
-NUM_FEATURES = 1
-CONFIDENCE_THRESHOLD =  0.6
-SMOOTHING_WINDOW =  5
+face_sequence_length = 10
+face_num_fetures = 2
 
-# Paths
-DATA_PATH = "data"
-MODEL_PATH = "models/bsl_multiclass_model.h5"
+confidence_threshold =  0.6
+smoothing_window =  5
 
 # Load Model
-model = load_model(MODEL_PATH)
+face_model = load_model("models/bsl_multiclass_model.h5")
+
+# Load Face classes 
+face_class_names = list(np.load("models/face_class_names.npy", allow_pickle = True))
+""" class_names = sorted([
+    folder for folder in os.listdir(data_path)
+    if os.path.isdir(os.path.join(data_path, folder))
+]) """
 
 # MediaPipe Setup - Face
 base_options = python.BaseOptions(model_asset_path="models/face_landmarker.task" )
 options = vision.FaceLandmarkerOptions( base_options = base_options, num_faces = 1)
 detector = vision.FaceLandmarker.create_from_options(options)
 
-display_text = "..."
-sequence = []
-prediction_history = deque(maxlen = SMOOTHING_WINDOW)
+# State
+face_sequence = []
+face_prediction_history = deque(maxlen = smoothing_window)
+last_face_prediction = "NEUTRAL"
 
-class_names = sorted([
-    folder for folder in os.listdir(DATA_PATH)
-    if os.path.isdir(os.path.join(DATA_PATH, folder))
-])
+# Helpers
+def normalise(arr):
+    mean = np.mean(arr, axis=(1, 2), keepdims=True)
+    std  = np.std(arr,  axis=(1, 2), keepdims=True) + 1e-8
+    return (arr - mean) / std
 
-# Start video capture
+
+def predict_class(model, sequence, class_names, pred_history, threshold):
+    input_data = np.expand_dims(np.array(sequence), axis=0)
+    input_data = normalise(input_data)
+
+    prediction     = model.predict(input_data, verbose=0)
+    predicted_idx  = np.argmax(prediction)
+    confidence     = prediction[0][predicted_idx]
+
+    if confidence > threshold:
+        pred_history.append(predicted_idx)
+
+    if pred_history:
+        best_idx = Counter(pred_history).most_common(1)[0][0]
+        return class_names[best_idx]
+    return None
+
+# Capture
 cap = cv2.VideoCapture(0)
+frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 while True:
     ret, frame = cap.read()
@@ -47,78 +72,62 @@ while True:
         break
 
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    mp_image = mp.Image(
-        image_format = mp.ImageFormat.SRGB,
-        data = rgb
-    )
+    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data = rgb)
 
-    result = detector.detect(mp_image)
-
+    face_result = detector.detect(mp_image)
     frame_features = [0.0, 0.0]
     face_detected = False
 
-    if result.face_landmarks:
-        face = result.face_landmarks[0]
-
+    # Detect Face
+    if face_result.face_landmarks:
+        face = face_result.face_landmarks[0]
         nose = face[1]
         left_eye = face[468]
         right_eye = face[473]
 
         eye_centre_x = (left_eye.x + right_eye.x) / 2
         eye_centre_y = (left_eye.y + right_eye.y) / 2
+        eye_distance = ((left_eye.x - right_eye.x) **2 + (left_eye.y - right_eye.y) **2) ** 0.5
 
-        eye_dist = ((
-            (left_eye.x - right_eye.x) **2 + 
-            (left_eye.y - right_eye.y) **2
-            ) **0.5)
+        if eye_distance > 0:
+            face_features = [
+                (nose.x - eye_centre_x) / eye_distance,
+                (nose.y - eye_centre_y) / eye_distance,
+            ]
+            face_detected = True
 
-        if eye_dist > 0:
-            nose_rel_x = (nose.x - eye_centre_x) / eye_dist
-            nose_rel_y = (nose.y - eye_centre_y) / eye_dist
-
+        # Draw face landmarks
         h, w, _ = frame.shape
         for idx in [1, 468, 473]:
-            lm = face[idx]
-            cx, cy = int(lm.x * w), int(lm.y * h)
-            cv2.circle(frame, (cx, cy), 5, (255, 197, 211), -1)
+            landmark = face[idx]
+            centre_x, centre_y = int(landmark.x * w), int(landmark.y * h)
+            cv2.circle(frame, (centre_x, centre_y), 5, (255, 197, 211), -1)
         
-        # Only accumulate when a face is present (mirrors hand_model logic)
     if face_detected:
-        sequence.append(frame_features)
+        face_sequence.append(frame_features)
     else:
-        prediction_history.clear()
-        sequence = []
-        display_text = "..."
+        face_prediction_history.clear()
+        face_sequence = []
  
-    if len(sequence) > SEQUENCE_LENGTH:
-        sequence.pop(0)
+    if len(face_sequence) > face_sequence_length:
+        face_sequence.pop(0)
  
-    # Predict when window is full
-    if len(sequence) == SEQUENCE_LENGTH:
-        input_data = np.array(sequence)                  # (10, 2)
-        input_data = np.expand_dims(input_data, axis=0)  # (1, 10, 2)
- 
-        # Normalisation
-        mean = np.mean(input_data, axis=(1, 2), keepdims=True)
-        std  = np.std(input_data,  axis=(1, 2), keepdims=True) + 1e-8
-        input_data = (input_data - mean) / std
- 
-        prediction = model.predict(input_data, verbose=0)
-        predicted_index = np.argmax(prediction)
-        confidence = prediction[0][predicted_index]
- 
-        if confidence > CONFIDENCE_THRESHOLD:
-            prediction_history.append(predicted_index)
- 
-        if len(prediction_history) > 0:
-            most_common = Counter(prediction_history).most_common(1)[0][0]
-            display_text = class_names[most_common]
-        else:
-            display_text = "..."
- 
-    cv2.putText(frame, display_text, (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    cv2.imshow("BSL Face Model", frame)
- 
+    # Predict when window is full/sequence of frames reached
+    if len(face_sequence) == face_sequence_length:
+        face_label = predict_class(
+            face_model, face_sequence,
+            face_class_names, face_prediction_history,
+            confidence_threshold
+        )
+        if face_label:
+            last_face_prediction = face_label
+    
+    ## Display
+    text_w, text_h, baseline = cv2.getTextSize(cv2.FONT_HERSHEY_SIMPLEX, 1.2, 2)
+    cv2.rectangle(frame, (10, 10), (20 + text_w, 20 + text_h + baseline), (0, 0, 0), -1)
+    cv2.putText(frame, f"Face: {last_face_prediction}", (15, frame_height - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
+    cv2.imshow("BSL Live Captioning", frame)
+
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
  

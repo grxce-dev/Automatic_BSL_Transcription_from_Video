@@ -17,7 +17,7 @@ num_features = 2
 
 # Load Data
 def load_data():
-    x = []
+    X = []
     y = []
     class_names = []
 
@@ -62,30 +62,30 @@ print("Detected classes:", class_names)
 print("Dataset shape:",    X.shape)   # (samples, 10, 2)
  
 if len(X) == 0:
-    raise ValueError("No data found — check DATA_PATH and that .npy files exist.")
+    raise ValueError("No data found — check data path and that .npy files exist.")
 
 #print("Detected classes:", class_names)
 #print("Dataset shape:", X.shape) 
 
 # Normalisation
 def normalize_data(X):
-    mean = np.mean(X, axis=(1, 2), keepdims=True)
-    std = np.std(X, axis=(1, 2), keepdims=True) + 1e-8
+    mean = np.mean(X, axis = (1, 2), keepdims = True)
+    std = np.std(X, axis = (1, 2), keepdims = True) + 1e-8
     return (X - mean) / std
 
 X = normalize_data(X)
 
+# Hot encode class names
 y = to_categorical(y, num_classes=len(class_names))
 
-# TRAIN / TEST SPLIT (CURRENTLY: 80/20)
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size = 0.2, random_state = 42
-)
+# Train/Test split
 
-# Build LSTM Model
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 42) # Currently 80/20
+
+# Build model
 model = Sequential([
     LSTM(32, input_shape=(sequence_length, num_features)),
-    Dropout(0.4),                                      # Prevent overfitting
+    Dropout(0.4),                                        # Prevent overfitting
     Dense(32, activation = "relu"),                      # Dense decision layer
     Dropout(0.3),
     Dense(len(class_names), activation = "softmax")      # Output layer (multi-class softmax)
@@ -93,13 +93,13 @@ model = Sequential([
 
 model.compile(
     optimizer="adam",
-    loss="categorical_crossentropy",   # Required for multi-class
+    loss="categorical_crossentropy",
     metrics=["accuracy"]
 )
 
 model.summary()
 
-# Early Stopping
+# Early Stopping to prevent overfitting
 early_stop = EarlyStopping(
     monitor="val_loss",
     patience=5,

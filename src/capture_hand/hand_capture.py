@@ -4,20 +4,21 @@ import os
 import cv2
 import numpy as np
 import mediapipe as mp
+
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-# CONFIGURATION
-SEQUENCE_LENGTH = 35
+# Configuration
+sequence_length = 35
 sequence = []
 recording = False
 
 # Save frames into .npy file in folder of choice
-SAVE_FOLDER = "data/hand"
-os.makedirs(SAVE_FOLDER, exist_ok = True)
+save_folder = "data/hand"
+os.makedirs(save_folder, exist_ok = True)
 
 # Load model
-base_options_hands = python.BaseOptions(model_asset_path="models/hand_landmarker.task") 
+base_options_hands = python.BaseOptions(model_asset_path = "models/hand_landmarker.task") 
 options_hands = vision.HandLandmarkerOptions(
     base_options = base_options_hands,
     num_hands = 2
@@ -45,7 +46,7 @@ while True:
     result = hand_detector.detect(mp_image)
     key = cv2.waitKey(1) & 0xFF
 
-    # DRAW PINK DOTS <3
+    # Draw landmarks
     for hand_landmarks in result.hand_landmarks:
         for landmark in hand_landmarks:
             x = int(landmark.x * frame_width)
@@ -67,7 +68,6 @@ while True:
 
     # If recording append frame (even if detection fails)
     if recording:
-        
         frame_features = [0] * 126 # incl. padding for missing hand
 
         if result.hand_landmarks and result.handedness:
@@ -90,13 +90,13 @@ while True:
         print("Frames:", len(sequence))
 
         # End recording and save
-        if len(sequence) == SEQUENCE_LENGTH:
+        if len(sequence) == sequence_length:
             recording = False
             sequence_array = np.array(sequence)
 
-            file_count = len(os.listdir(SAVE_FOLDER))
+            file_count = len(os.listdir(save_folder))
             filename = f"file_{file_count}.npy"
-            filepath = os.path.join(SAVE_FOLDER, filename)
+            filepath = os.path.join(save_folder, filename)
 
             np.save(filepath, sequence_array)
 
