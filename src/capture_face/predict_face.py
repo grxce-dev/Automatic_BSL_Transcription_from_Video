@@ -128,6 +128,8 @@ for i in range(10):
     print("Pred:", class_names[pred_labels[i]],
           "True:", class_names[true_labels[i]])
 
+# "PLOTTING THE ACTUAL AND PREDICTED VALUES, YOU CAN GAIN INSIGHTS INTO HOW WELL THE MODEL CATUPES THE UNDERLYING PATTERNS IN DATA"
+
 # Save Model
 #save_folder = "models"
 os.makedirs("models", exist_ok = True)

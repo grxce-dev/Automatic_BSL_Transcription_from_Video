@@ -61,8 +61,7 @@ while True:
         recording = True
         sequence = []
 
-        cv2.putText(frame, "Recording...", (20, 100),
-        cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+        cv2.putText(frame, "Recording...", (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
 
     # Press 'q' to quit
     if key == ord("q"):
@@ -100,8 +99,10 @@ while True:
             recording = False
             sequence_array = np.array(sequence)
 
+            cv2.putText(frame, "Recording Finished", (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+
             file_count = len(os.listdir(save_folder))
-            filename = f"file_{file_count}.npy"
+            filename = f"file_{file_count}_default.npy"
             filepath = os.path.join(save_folder, filename)
 
             np.save(filepath, sequence_array)
