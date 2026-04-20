@@ -95,7 +95,7 @@ while True:
             sequence_array = np.array(sequence)
 
             file_count = len(os.listdir(save_folder))
-            filename = f"file_{file_count}_fast_right.npy"
+            filename = f"file_{file_count}_distance_right.npy"
             filepath = os.path.join(save_folder, filename)
 
             np.save(filepath, sequence_array)
