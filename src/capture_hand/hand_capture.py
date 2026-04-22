@@ -14,7 +14,7 @@ sequence = []
 recording = False
 
 # Save frames into .npy file in folder of choice
-save_folder = "data/hand/6"
+save_folder = "data/hand/6_both"
 os.makedirs(save_folder, exist_ok = True)
 
 # Load model
@@ -58,9 +58,6 @@ while True:
         print("Recording started")
         recording = True
         sequence = []
-        
-        cv2.putText(frame, "Recording...", (20, 100),
-        cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
 
     # Press 'q' to quit
     if key == ord("q"):
@@ -68,6 +65,10 @@ while True:
 
     # If recording append frame (even if detection fails)
     if recording:
+        
+        cv2.putText(frame, "Recording...", (20, 100),
+        cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+
         frame_features = [0] * 126 # incl. padding for missing hand
 
         if result.hand_landmarks and result.handedness:
@@ -94,8 +95,8 @@ while True:
             recording = False
             sequence_array = np.array(sequence)
 
-            file_count = len(os.listdir(save_folder))
-            filename = f"file_{file_count}_default_left.npy"
+            file_count = len(os.listdir(save_folder)) # NUMBER OF DIRECTORIES DOESNT CHANGE </3
+            filename = f"file_{file_count}_default_right_thumb_up.npy"
             filepath = os.path.join(save_folder, filename)
 
             np.save(filepath, sequence_array)
