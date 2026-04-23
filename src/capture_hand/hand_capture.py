@@ -14,7 +14,7 @@ sequence = []
 recording = False
 
 # Save frames into .npy file in folder of choice
-save_folder = "data/hand/6_both"
+save_folder = "data/hand/wales"
 os.makedirs(save_folder, exist_ok = True)
 
 # Load model
@@ -96,7 +96,7 @@ while True:
             sequence_array = np.array(sequence)
 
             file_count = len(os.listdir(save_folder)) # NUMBER OF DIRECTORIES DOESNT CHANGE </3
-            filename = f"file_{file_count}_default_right_thumb_up.npy"
+            filename = f"file_{file_count}_default_right.npy"
             filepath = os.path.join(save_folder, filename)
 
             np.save(filepath, sequence_array)
