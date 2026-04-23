@@ -12,7 +12,7 @@ from keras.callbacks import EarlyStopping
 
 # Configuration
 data_path= 'data/hand'         
-sequence_length = 35        
+sequence_length = 30        
 num_features = 126          # 2 hands × 21 landmarks × (x,y,z)
 
 # Load data
@@ -37,22 +37,16 @@ def load_data():
     for class_name in class_names:
         class_path = os.path.join(data_path, class_name)
 
-        for variation in os.listdir(class_path):
-            variation_path = os.path.join(class_path, variation)
+        for file in os.listdir(class_path):
+            if file.endswith(".npy"):
+                filepath = os.path.join(class_path, file)
+                sequence = np.load(filepath)
 
-            if not os.path.isdir(variation_path):
-                continue
-
-            for file in os.listdir(variation_path):
-                if file.endswith(".npy"):
-                    filepath = os.path.join(variation_path, file)
-                    sequence = np.load(filepath)
-
-                    if sequence.shape == (sequence_length, num_features):
-                        X.append(sequence)
-                        y.append(label_map[class_name])
-                    else:
-                        print("Skipped:", file, "Shape:", sequence.shape)
+                if sequence.shape == (sequence_length, num_features):
+                    X.append(sequence)
+                    y.append(label_map[class_name])
+                else:
+                    print("Skipped:", file, "Shape:", sequence.shape)
 
     return np.array(X), np.array(y), class_names
 

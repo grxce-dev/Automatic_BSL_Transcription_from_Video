@@ -12,7 +12,7 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
  
 # Configuration
-hand_sequence_length = 35
+hand_sequence_length = 30
 hand_num_features = 126   # 2 hands × 21 landmarks × (x, y, z)
  
 face_sequence_length  = 10
@@ -22,8 +22,8 @@ confidence_threshold  = 0.6
 smoothing_window = 5
  
 # Load Models
-hand_model = load_model("models/hand_model.h5")
-face_model = load_model("models/face_model.h5")
+hand_model = load_model("models/detection_model/hand_model.h5")
+face_model = load_model("models/detection_model/face_model.h5")
 
 # Load Hand classes 
 hand_class_names = list(np.load("models/hand_class_names.npy", allow_pickle = True))
@@ -103,12 +103,7 @@ while True:
         hand_detected = True
         for i, hand in enumerate(hand_result.hand_landmarks):
             label = hand_result.handedness[i][0].category_name
-            
-            if label == "Left":
-                offset = 0 
-            else:
-                hand_num_features // 2
-
+            offset = 0 if label == 'Left' else hand_num_features // 2
             wrist = hand[0]
 
             for j, landmark in enumerate(hand):
@@ -121,9 +116,9 @@ while True:
 
         # Draw hand landmarks
         for hand_landmarks in hand_result.hand_landmarks:
-            for lm in hand_landmarks:
-                cx = int(hand_landmarks.x * frame_width)
-                cy = int(hand_landmarks.y * frame_height)
+            for landmark in hand_landmarks:
+                cx = int(landmark.x * frame_width)
+                cy = int(landmark.y * frame_height)
                 cv2.circle(frame, (cx, cy), 4, (255, 197, 211), -1)
 
     if hand_detected:
@@ -196,8 +191,10 @@ while True:
 
     modifier_map = {
         "UNDERSTAND": { "NOD": "UNDERSTAND", "SHAKE": "DON'T UNDERSTAND", "NEUTRAL": None },
+        "YES": {"NOD": "YES", "SHAKE": None, "NEUTRAL": None },
+        "NO": {"NOD": None, "SHAKE": "NO", "NEUTRAL": None }
     }
-
+    
     if hand_label:
         modifiers = modifier_map.get(hand_label, {})
         display_text = modifiers.get(last_face_prediction, hand_label)
@@ -205,13 +202,13 @@ while True:
         display_text = "..."
 
     # Display
-    text_w, text_h, baseline = cv2.getTextSize(display_text, cv2.FONT_HERSHEY_SIMPLEX, 1.2, 2)
+    (text_w, text_h), baseline = cv2.getTextSize(display_text, cv2.FONT_HERSHEY_SIMPLEX, 1.2, 2)
     cv2.rectangle(frame, (10, 10), (20 + text_w, 20 + text_h + baseline), (0, 0, 0), -1)
+    
     cv2.putText(frame, display_text, (15, 15 + text_h), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2)
-    cv2.imshow("BSL Live Captioning", frame)
-
-# TESTING:
     cv2.putText(frame, f"Face: {last_face_prediction}", (15, frame_height - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
+
+    cv2.imshow("BSL Live Captioning", frame)
 
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break

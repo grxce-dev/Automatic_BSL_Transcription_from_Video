@@ -123,7 +123,7 @@ while True:
             last_face_prediction = face_label
     
     ## Display
-    text_w, text_h, baseline = cv2.getTextSize(cv2.FONT_HERSHEY_SIMPLEX, 1.2, 2)
+    text_w, text_h, baseline = cv2.getTextSize(last_face_prediction, cv2.FONT_HERSHEY_SIMPLEX, 1.2, 2)
     cv2.rectangle(frame, (10, 10), (20 + text_w, 20 + text_h + baseline), (0, 0, 0), -1)
     cv2.putText(frame, f"Face: {last_face_prediction}", (15, frame_height - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
     cv2.imshow("BSL Live Captioning", frame)

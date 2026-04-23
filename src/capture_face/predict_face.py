@@ -12,7 +12,7 @@ from keras.callbacks import EarlyStopping
 
 # Configuration
 data_path = 'data/face'
-sequence_length = 35
+sequence_length = 10
 num_features = 2
 
 # Load Data
@@ -30,21 +30,15 @@ def load_data():
     class_names.sort()
     label_map = {name: index for index, name in enumerate(class_names)}
 
-    np.save("models/face_class_names.py", class_names)
+    np.save("models/face_class_names.npy", class_names)
 
     # Load each sequence
     for class_name in class_names:
         class_path = os.path.join(data_path, class_name)
 
-        for variation in os.listdir(class_path):
-            variation_path = os.path.join(class_path, variation)
-
-            if not os.path.isdir(variation):
-                continue
-
-        for file in os.listdir(variation_path):
+        for file in os.listdir(class_path):
             if file.endswith(".npy"):
-                filepath = os.path.join(variation_path, file)
+                filepath = os.path.join(class_path, file)
                 sequence = np.load(filepath)
 
                 if sequence.shape == (sequence_length, num_features):

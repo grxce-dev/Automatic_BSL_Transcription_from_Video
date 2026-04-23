@@ -12,7 +12,7 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
 # Configuration
-hand_sequence_length = 35
+hand_sequence_length = 30
 hand_num_features = 126
 
 confidence_threshold =  0.6
@@ -40,7 +40,7 @@ hand_prediction_history = deque(maxlen = smoothing_window)
 display_text = "..."
 
 # Helpers
-def normalise(arr):
+def normalise(input_data):
     mean = np.mean(input_data, axis = (1, 2), keepdims = True)
     std = np.std(input_data, axis = (1, 2), keepdims = True) + 1e-8
     input_data = (input_data - mean) / std
@@ -115,10 +115,6 @@ while True:
             hand_class_names, hand_prediction_history,
             confidence_threshold
         )
-        
-    """     if len(hand_sequence) == sequence_length:
-            input_data = np.array(hand_sequence)
-            input_data = np.expand_dims(input_data, axis=0) """
         
     ## Display
     text_w, text_h, baseline = cv2.getTextSize(display_text, cv2.FONT_HERSHEY_SIMPLEX, 1.2, 2)
