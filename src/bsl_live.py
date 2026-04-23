@@ -5,34 +5,12 @@ import cv2
 import numpy as np
 import mediapipe as mp
 
+from config import *
 from tensorflow import keras
 from collections import deque, Counter
 from keras.models import load_model
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
- 
-# Configuration
-hand_sequence_length = 30
-hand_num_features = 126   # 2 hands × 21 landmarks × (x, y, z)
- 
-face_sequence_length  = 10
-face_num_features = 2     # nose_rel_x, nose_rel_y
- 
-confidence_threshold  = 0.6
-smoothing_window = 5
- 
-# Load Models
-hand_model = load_model("models/detection_model/hand_model.h5")
-face_model = load_model("models/detection_model/face_model.h5")
-
-# Load Hand classes 
-hand_class_names = list(np.load("models/hand_class_names.npy", allow_pickle = True))
-
-# Load Face classes 
-face_class_names = list(np.load("models/face_class_names.npy", allow_pickle = True))
-
-print("Hand classes:", hand_class_names)
-print("Face classes:", face_class_names)
 
 # MediaPipe Detectors
 

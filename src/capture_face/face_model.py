@@ -5,28 +5,16 @@ import cv2
 import numpy as np
 import mediapipe as mp
 
+from config import *
 from tensorflow import keras
 from collections import deque, Counter
 from keras.models import load_model
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-# Configuration
-face_sequence_length = 10
-face_num_fetures = 2
-
-confidence_threshold =  0.6
-smoothing_window =  5
-
-# Load Model
+# Load Model and Face classes 
 face_model = load_model("models/bsl_multiclass_model.h5")
-
-# Load Face classes 
 face_class_names = list(np.load("models/face_class_names.npy", allow_pickle = True))
-""" class_names = sorted([
-    folder for folder in os.listdir(data_path)
-    if os.path.isdir(os.path.join(data_path, folder))
-]) """
 
 # MediaPipe Setup - Face
 base_options = python.BaseOptions(model_asset_path="models/face_landmarker.task" )
@@ -39,19 +27,19 @@ face_prediction_history = deque(maxlen = smoothing_window)
 last_face_prediction = "NEUTRAL"
 
 # Helpers
-def normalise(arr):
-    mean = np.mean(arr, axis=(1, 2), keepdims=True)
-    std  = np.std(arr,  axis=(1, 2), keepdims=True) + 1e-8
-    return (arr - mean) / std
+def normalise(input_data):
+    mean = np.mean(input_data, axis = (1, 2), keepdims = True)
+    std  = np.std(input_data,  axis = (1, 2), keepdims = True) + 1e-8
+    return (input_data - mean) / std
 
 
 def predict_class(model, sequence, class_names, pred_history, threshold):
     input_data = np.expand_dims(np.array(sequence), axis=0)
     input_data = normalise(input_data)
 
-    prediction     = model.predict(input_data, verbose=0)
-    predicted_idx  = np.argmax(prediction)
-    confidence     = prediction[0][predicted_idx]
+    prediction = model.predict(input_data, verbose=0)
+    predicted_idx = np.argmax(prediction)
+    confidence = prediction[0][predicted_idx]
 
     if confidence > threshold:
         pred_history.append(predicted_idx)

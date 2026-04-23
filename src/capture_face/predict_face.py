@@ -9,6 +9,8 @@ from keras.models import Sequential
 from keras.layers import LSTM, Dense, Dropout
 from keras.utils import to_categorical
 from keras.callbacks import EarlyStopping
+import matplotlib.pyplot as plt
+
 
 # Configuration
 data_path = 'data/face'
@@ -124,9 +126,30 @@ for i in range(10):
 
 # "PLOTTING THE ACTUAL AND PREDICTED VALUES, YOU CAN GAIN INSIGHTS INTO HOW WELL THE MODEL CATUPES THE UNDERLYING PATTERNS IN DATA"
 
-# Save Model
-#save_folder = "models"
+plt.figure(figsize=(12, 4))
+
+plt.subplot(1, 2, 1)
+plt.plot(history.history['accuracy'], label='Train')
+plt.plot(history.history['val_accuracy'], label='Validation')
+plt.title('Accuracy over Epochs')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.legend()
+
+plt.subplot(1, 2, 2)
+plt.plot(history.history['loss'], label='Train')
+plt.plot(history.history['val_loss'], label='Validation')
+plt.title('Loss over Epochs')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend()
+
+plt.tight_layout()
+plt.savefig("models/training_history.png")
+plt.show()
+
 os.makedirs("models", exist_ok = True)
-file_count = len(os.listdir("models"))
-model.save(f"models/model_acc_{accuracy:.2f}.h5")
+model.save(f"models/detection_model/hand_model.h5")
+print("Model saved to models")
+
 print("Model saved to models")

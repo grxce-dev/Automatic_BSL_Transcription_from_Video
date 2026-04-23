@@ -1,4 +1,18 @@
-# Capture hand landmarks
+
+"""
+1. hand_capture.py
+-------------------
+Records hand landmark sequences for BSL gesture recognition training.
+
+Captures 30 frame sequences of hand landmarks using MediaPipe,
+normalized relative to the wrist joint. Sequences are saved as .npy
+files under 'data/hand/<class_name>/.
+
+Controls:
+    s - start recording a sequence
+    q - quit
+
+"""
 
 import os
 import cv2
@@ -13,16 +27,15 @@ sequence_length = 30
 sequence = []
 recording = False
 
-# Save frames into .npy file in folder of choice
-save_folder = "data/hand/wales"
-os.makedirs(save_folder, exist_ok = True)
+# Change this to the class name you are recording before each session
+save_folder = "data/hand/"
 
 # Load model
 base_options_hands = python.BaseOptions(model_asset_path = "models/hand_landmarker.task") 
 options_hands = vision.HandLandmarkerOptions(
     base_options = base_options_hands,
     num_hands = 2
-)
+) 
 
 hand_detector = vision.HandLandmarker.create_from_options(options_hands)
 
@@ -46,20 +59,17 @@ while True:
     result = hand_detector.detect(mp_image)
     key = cv2.waitKey(1) & 0xFF
 
-    # Draw landmarks
     for hand_landmarks in result.hand_landmarks:
         for landmark in hand_landmarks:
             x = int(landmark.x * frame_width)
             y = int(landmark.y * frame_height)
             cv2.circle(frame, (x,y), 5,(255, 197, 211), -1)
 
-    # Press 's' to start recording
     if key == ord("s") and not recording:
         print("Recording started")
         recording = True
         sequence = []
 
-    # Press 'q' to quit
     if key == ord("q"):
         break      
 
@@ -69,7 +79,7 @@ while True:
         cv2.putText(frame, "Recording...", (20, 100),
         cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
 
-        frame_features = [0] * 126 # incl. padding for missing hand
+        frame_features = [0] * 126
 
         if result.hand_landmarks and result.handedness:
 
@@ -79,7 +89,7 @@ while True:
 
                 wrist = hand[0]
 
-                for j, landmark in enumerate(hand):  # Normalisation relative to wrist
+                for j, landmark in enumerate(hand):
                     base = offset + j * 3
                     frame_features[base:base+3] = [
                         landmark.x - wrist.x,    
@@ -95,7 +105,7 @@ while True:
             recording = False
             sequence_array = np.array(sequence)
 
-            file_count = len(os.listdir(save_folder)) # NUMBER OF DIRECTORIES DOESNT CHANGE </3
+            file_count = len(os.listdir(save_folder))
             filename = f"file_{file_count}_default_right.npy"
             filepath = os.path.join(save_folder, filename)
 
