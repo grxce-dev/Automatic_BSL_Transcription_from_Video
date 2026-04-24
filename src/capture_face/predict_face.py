@@ -1,26 +1,41 @@
-# Predict Face Landmarks
+"""
+predict_face.py
+---------------
+Trains an LSTM model on recorded face landmark sequences for BSL gesture classification.
+
+Loads .npy sequence files from data/face/<class_name>/, trains an LSTM classifier,
+and saves the model, training history plot, and confusion matrix to models/evaluation/face.
+
+Output:
+    models/detection_model/hand_model.h5
+    models/evaluation/hand/training_history.png
+    models/evaluation/hand/confusion_matrix.png
+"""
 
 import os
 import numpy as np
-
-from sklearn.model_selection import train_test_split
-from tensorflow import keras
-from keras.models import Sequential
-from keras.layers import LSTM, Dense, Dropout
-from keras.utils import to_categorical
-from keras.callbacks import EarlyStopping
 import matplotlib.pyplot as plt
 
+from tensorflow import keras
+from keras.models import Sequential
+from keras.utils import to_categorical
+from keras.callbacks import EarlyStopping
+from keras.layers import LSTM, Dense, Dropout
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 
 # Configuration
 data_path = 'data/face'
 sequence_length = 10
-num_features = 2
+num_features = 3
 
 # Load Data
 def load_data():
-    X = []
-    y = []
+    """
+    Docstring for load_data
+    """
+    sequences = []
+    class_numbers = []
     class_names = []
 
     for folder in os.listdir(data_path):
@@ -32,7 +47,7 @@ def load_data():
     class_names.sort()
     label_map = {name: index for index, name in enumerate(class_names)}
 
-    np.save("models/face_class_names.npy", class_names)
+    np.save("models/class_names/face_class_names.npy", class_names)
 
     # Load each sequence
     for class_name in class_names:
@@ -44,39 +59,37 @@ def load_data():
                 sequence = np.load(filepath)
 
                 if sequence.shape == (sequence_length, num_features):
-                    X.append(sequence)
-                    y.append(label_map[class_name])
+                    sequences.append(sequence)
+                    class_numbers.append(label_map[class_name])
                 else:
                     print("Skipped:", file, "Shape:", sequence.shape)
 
-    return np.array(X), np.array(y), class_names
+    return np.array(sequences), np.array(class_numbers), class_names
 
-# Load dataset
-X, y, class_names = load_data()
- 
-print("Detected classes:", class_names)
-print("Dataset shape:",    X.shape)   # (samples, 10, 2)
- 
-if len(X) == 0:
-    raise ValueError("No data found — check data path and that .npy files exist.")
-
-#print("Detected classes:", class_names)
-#print("Dataset shape:", X.shape) 
 
 # Normalisation
-def normalize_data(X):
-    mean = np.mean(X, axis = (1, 2), keepdims = True)
-    std = np.std(X, axis = (1, 2), keepdims = True) + 1e-8
-    return (X - mean) / std
+def normalize_data(input_data):
+    """
+    Docstring for normalize_data
+    
+    :param X: Description
+    """
+    mean = np.mean(input_data, axis = (1, 2), keepdims = True)
+    std = np.std(input_data, axis = (1, 2), keepdims = True) + 1e-8
+    return (input_data - mean) / std
 
-X = normalize_data(X)
 
-# Hot encode class names
-y = to_categorical(y, num_classes=len(class_names))
+# Load dataset
+sequences, class_numbers, class_names = load_data()
+ 
+if len(sequences) == 0:
+    raise ValueError("No data found — check data path and that .npy files exist.")
+
+sequences = normalize_data(sequences)
+class_numbers = to_categorical(class_numbers, num_classes=len(class_names))
 
 # Train/Test split
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 42) # Currently 80/20
+X_train, X_test, y_train, y_test = train_test_split(sequences, class_numbers, test_size = 0.2, random_state = 42) # Currently 80/20
 
 # Build model
 model = Sequential([
@@ -88,9 +101,9 @@ model = Sequential([
 ])
 
 model.compile(
-    optimizer="adam",
-    loss="categorical_crossentropy",
-    metrics=["accuracy"]
+    optimizer = "adam",
+    loss = "categorical_crossentropy",
+    metrics = ["accuracy"]
 )
 
 model.summary()
@@ -124,32 +137,40 @@ for i in range(10):
     print("Pred:", class_names[pred_labels[i]],
           "True:", class_names[true_labels[i]])
 
-# "PLOTTING THE ACTUAL AND PREDICTED VALUES, YOU CAN GAIN INSIGHTS INTO HOW WELL THE MODEL CATUPES THE UNDERLYING PATTERNS IN DATA"
-
-plt.figure(figsize=(12, 4))
+plt.figure(figsize = (12, 4))
 
 plt.subplot(1, 2, 1)
-plt.plot(history.history['accuracy'], label='Train')
-plt.plot(history.history['val_accuracy'], label='Validation')
+plt.plot(history.history['accuracy'], label = 'Train')
+plt.plot(history.history['val_accuracy'], label = 'Validation')
 plt.title('Accuracy over Epochs')
 plt.xlabel('Epoch')
 plt.ylabel('Accuracy')
 plt.legend()
 
 plt.subplot(1, 2, 2)
-plt.plot(history.history['loss'], label='Train')
-plt.plot(history.history['val_loss'], label='Validation')
+plt.plot(history.history['loss'], label = 'Train')
+plt.plot(history.history['val_loss'], label = 'Validation')
 plt.title('Loss over Epochs')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.legend()
 
 plt.tight_layout()
-plt.savefig("models/training_history.png")
+plt.savefig("models/evaluation/face/training_history.png")
 plt.show()
 
-os.makedirs("models", exist_ok = True)
-model.save(f"models/detection_model/hand_model.h5")
-print("Model saved to models")
+cm = confusion_matrix(true_labels, pred_labels)
+display = ConfusionMatrixDisplay(confusion_matrix = cm, display_labels = class_names)
+figure, ax = plt.subplots(figsize = (14, 14))
+display.plot(ax=ax, xticks_rotation = 45)
 
+plt.tight_layout()
+plt.savefig("models/evaluation/face/confusion_matrix.png")
+os.makedirs("models/evaluation/face", exist_ok = True)
+plt.show()
+
+# Save model
+os.makedirs("models", exist_ok = True)
+model.save(f"models/detection_model/face_model.h5")
+os.makedirs("models/detection_model", exist_ok = True)
 print("Model saved to models")

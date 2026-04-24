@@ -1,4 +1,14 @@
-# Model face landmarks
+"""
+face_model.py
+-----------------
+Live face gesture recognition using pre-trained LSTM model.
+
+Loads a trained model and runs real time inference on webcam input,
+displying the predicted BSL sign on screen.
+
+Controls:
+    q - quit
+"""
 
 import os
 import cv2
@@ -7,10 +17,11 @@ import mediapipe as mp
 
 from config import *
 from tensorflow import keras
-from collections import deque, Counter
-from keras.models import load_model
 from mediapipe.tasks import python
+from keras.models import load_model
+from collections import deque, Counter
 from mediapipe.tasks.python import vision
+
 
 # Load Model and Face classes 
 face_model = load_model("models/bsl_multiclass_model.h5")

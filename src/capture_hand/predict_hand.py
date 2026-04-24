@@ -4,7 +4,7 @@ predict_hand.py
 Trains an LSTM model on recorded hand landmark sequences for BSL gesture classification.
 
 Loads .npy sequence files from data/hand/<class_name>/, trains an LSTM classifier,
-and saves the model, training history plot, and confusion matrix to models/.
+and saves the model, training history plot, and confusion matrix to models/evaluation/hand.
 
 Output:
     models/detection_model/hand_model.h5
@@ -32,11 +32,13 @@ num_features = 126
 
 # Load data
 def load_data():
+    """
+    Docstring for load_data
+    """
     sequences = []           
     class_numbers = []                
     class_names = [] 
 
-    # Every top-level folder = one class
     for folder in os.listdir(data_path):
         folder_path = os.path.join(data_path, folder)
 
@@ -46,7 +48,7 @@ def load_data():
     class_names.sort()
     label_map = {name: idx for idx, name in enumerate(class_names)}
 
-    np.save("models/hand_class_names.npy", class_names)
+    np.save("models/hand/hand_class_names.npy", class_names)
     
     # Load each sequence
     for class_name in class_names:
@@ -65,17 +67,22 @@ def load_data():
 
     return np.array(sequences), np.array(class_numbers), class_names
 
+# Normalization
+def normalize_data(input_data):
+    """
+    Docstring for normalize_data
+    
+    :param X: Description
+    """
+    mean = np.mean(input_data, axis = (1, 2), keepdims = True)
+    std  = np.std(input_data, axis = (1, 2), keepdims = True) + 1e-8
+    return (input_data - mean) / std
+
 # Load dataset
 sequences, class_numbers, class_names = load_data() 
  
 if len(sequences) == 0:
     raise ValueError("No data found — check data path and that .npy files exist.")
-
-# Normalization
-def normalize_data(X):
-    mean = np.mean(X, axis = (1, 2), keepdims = True)
-    std  = np.std(X, axis = (1, 2), keepdims = True) + 1e-8
-    return (X - mean) / std
 
 sequences = normalize_data(sequences)
 class_numbers = to_categorical(class_numbers, num_classes=len(class_names))
@@ -93,9 +100,9 @@ model = Sequential([
 ])
 
 model.compile(
-    optimizer="adam",
-    loss="categorical_crossentropy",
-    metrics=["accuracy"]
+    optimizer = "adam",
+    loss = "categorical_crossentropy",
+    metrics = ["accuracy"]
 )
 
 model.summary()
@@ -133,8 +140,8 @@ for i in range(10):
 plt.figure(figsize=(12, 4))
 
 plt.subplot(1, 2, 1)
-plt.plot(history.history['accuracy'], label='Train')
-plt.plot(history.history['val_accuracy'], label='Validation')
+plt.plot(history.history['accuracy'], label = 'Train')
+plt.plot(history.history['val_accuracy'], label = 'Validation')
 plt.title('Accuracy over Epochs')
 plt.xlabel('Epoch')
 plt.ylabel('Accuracy')
@@ -155,7 +162,8 @@ plt.show()
 cm = confusion_matrix(true_labels, pred_labels)
 display = ConfusionMatrixDisplay(confusion_matrix = cm, display_labels = class_names)
 figure, ax = plt.subplots(figsize=(14, 14))
-display.plot(ax=ax, xticks_rotation=45)
+display.plot(ax=ax, xticks_rotation = 45)
+
 plt.tight_layout()
 plt.savefig("models/evaluation/hand/confusion_matrix.png")
 os.makedirs("models/evaluation/hand", exist_ok = True)

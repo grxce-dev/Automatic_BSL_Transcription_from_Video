@@ -1,10 +1,21 @@
-# Capture face landmarks
+"""
+face_capture.py
+-------------------
+Records face (nose tip, irisis of both eyes) landmark sequences for BSL 
+gesture recognition training.
+
+Captures 10 frame sequences of face landmarks using MediaPipe.
+Sequences are saved as .npy files under 'data/face/<class_name>/.
+
+Controls:
+    s - start recording a sequence
+    q - quit
+"""
 
 import os
 import cv2
 import numpy as np
 import mediapipe as mp
-
 from config import *
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision

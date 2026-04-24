@@ -1,6 +1,5 @@
-
 """
-1. hand_capture.py
+hand_capture.py
 -------------------
 Records hand landmark sequences for BSL gesture recognition training.
 
