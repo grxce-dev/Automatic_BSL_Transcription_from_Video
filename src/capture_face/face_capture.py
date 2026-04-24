@@ -16,12 +16,12 @@ import os
 import cv2
 import numpy as np
 import mediapipe as mp
+
 from config import *
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
 # Configuration
-sequence_length = 10
 sequence = []
 recording = False
 
@@ -30,7 +30,7 @@ save_folder = "data/face"
 os.makedirs(save_folder, exist_ok = True)
 
 # Load model
-base_options_face = python.BaseOptions(model_asset_path = "models/face_landmarker.task" )
+base_options_face = python.BaseOptions(model_asset_path = face_landmarker_path )
 options_face = vision.FaceLandmarkerOptions(
     base_options = base_options_face,
     num_faces = 1
@@ -107,7 +107,7 @@ while True:
         print("Frames:", len(sequence))
 
         # End recording and save
-        if len(sequence) == sequence_length:
+        if len(sequence) == face_sequence_length:
             recording = False
             sequence_array = np.array(sequence)
 

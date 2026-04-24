@@ -23,9 +23,10 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
 hand_model = load_model(hand_model_path)
+hand_class_names = list(np.load(hand_class_path, allow_pickle = True))
 
-# MediaPipe Setup - Hand Detector
-base_options = python.BaseOptions(model_asset_path="models/hand_landmarker.task")
+# MediaPipe Setup - Face
+base_options = python.BaseOptions(model_asset_path = hand_landmarker_path)
 options = vision.HandLandmarkerOptions(base_options = base_options, num_hands = 2)
 detector = vision.HandLandmarker.create_from_options(options)
 

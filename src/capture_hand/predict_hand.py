@@ -4,7 +4,8 @@ predict_hand.py
 Trains an LSTM model on recorded hand landmark sequences for BSL gesture classification.
 
 Loads .npy sequence files from data/hand/<class_name>/, trains an LSTM classifier,
-and saves the model, training history plot, and confusion matrix to models/evaluation/hand.
+and saves the model, training history plot, and confusion matrix to models/evaluation/
+hand.
 
 Output:
     models/detection_model/hand_model.h5
@@ -16,21 +17,16 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+from config import *
 from tensorflow import keras
 from keras.models import Sequential
 from keras.utils import to_categorical
 from keras.callbacks import EarlyStopping
 from keras.layers import LSTM, Dense, Dropout
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
+from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix 
 
-
-# Configuration
-data_path = 'data/hand'         
-sequence_length = 30        
-num_features = 126
-
-# Load data
+# Helpers
 def load_data():
     """
     Docstring for load_data
@@ -39,8 +35,8 @@ def load_data():
     class_numbers = []                
     class_names = [] 
 
-    for folder in os.listdir(data_path):
-        folder_path = os.path.join(data_path, folder)
+    for folder in os.listdir(hand_data_path):
+        folder_path = os.path.join(hand_data_path, folder)
 
         if os.path.isdir(folder_path):
             class_names.append(folder)
@@ -52,14 +48,14 @@ def load_data():
     
     # Load each sequence
     for class_name in class_names:
-        class_path = os.path.join(data_path, class_name)
+        class_path = os.path.join(hand_data_path, class_name)
 
         for file in os.listdir(class_path):
             if file.endswith(".npy"):
                 filepath = os.path.join(class_path, file)
                 sequence = np.load(filepath)
 
-                if sequence.shape == (sequence_length, num_features):
+                if sequence.shape == (hand_sequence_length, hand_num_features):
                     sequences.append(sequence)
                     class_numbers.append(label_map[class_name])
                 else:
@@ -67,18 +63,25 @@ def load_data():
 
     return np.array(sequences), np.array(class_numbers), class_names
 
-# Normalization
 def normalize_data(input_data):
     """
-    Docstring for normalize_data
-    
-    :param X: Description
+    Normalize a sequence array along the time and feature axis
+
+    Parameters:
+    -----------
+    input_data : np.ndarray, shape (batch, frames, features)
+                Raw input sequences
+
+    Returns:
+    --------
+    np.ndarray
+        Zero mean, unit variance normalized array.
     """
     mean = np.mean(input_data, axis = (1, 2), keepdims = True)
     std  = np.std(input_data, axis = (1, 2), keepdims = True) + 1e-8
     return (input_data - mean) / std
 
-# Load dataset
+
 sequences, class_numbers, class_names = load_data() 
  
 if len(sequences) == 0:
@@ -92,7 +95,7 @@ X_train, X_test, y_train, y_test = train_test_split(sequences, class_numbers, te
 
 # Build model
 model = Sequential([
-    LSTM(32, input_shape=(sequence_length, num_features)),
+    LSTM(32, input_shape = (hand_sequence_length, hand_num_features)),
     Dropout(0.4),                                        # Prevent overfitting
     Dense(32, activation = "relu"),                      # Dense decision layer
     Dropout(0.3),

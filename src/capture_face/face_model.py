@@ -22,13 +22,12 @@ from keras.models import load_model
 from collections import deque, Counter
 from mediapipe.tasks.python import vision
 
-
 # Load Model and Face classes 
-face_model = load_model("models/bsl_multiclass_model.h5")
-face_class_names = list(np.load("models/face_class_names.npy", allow_pickle = True))
+face_model = load_model(face_model_path)
+face_class_names = list(np.load(face_class_path, allow_pickle = True))
 
 # MediaPipe Setup - Face
-base_options = python.BaseOptions(model_asset_path="models/face_landmarker.task" )
+base_options = python.BaseOptions(model_asset_path = face_landmarker_path )
 options = vision.FaceLandmarkerOptions( base_options = base_options, num_faces = 1)
 detector = vision.FaceLandmarker.create_from_options(options)
 
@@ -39,12 +38,49 @@ last_face_prediction = "NEUTRAL"
 
 # Helpers
 def normalise(input_data):
+    """
+    Normalize a sequence array along the time and feature axis
+
+    Parameters:
+    -----------
+    input_data : np.ndarray, shape (batch, frames, features)
+                Raw input sequences
+
+    Returns:
+    --------
+    np.ndarray
+        Zero mean, unit variance normalized array.
+    """
     mean = np.mean(input_data, axis = (1, 2), keepdims = True)
     std  = np.std(input_data,  axis = (1, 2), keepdims = True) + 1e-8
     return (input_data - mean) / std
 
 
 def predict_class(model, sequence, class_names, pred_history, threshold):
+    """
+    Run inference on a landmark sequence and return the smoothed prediction.
+
+    Predictions below the confidence threshold are discarded. The most
+    frequent prediction across the smoothing window is returned.
+
+    Parameters
+    ----------
+    model : keras.Model
+        Trained LSTM classifier.
+    sequence : list of list[float]
+        Sliding window of normalised landmark frames.
+    class_names : list[str]
+        Ordered list of class labels matching model output indices.
+    prediction_history : collections.deque
+        Rolling buffer of recent high-confidence prediction indices.
+    threshold : float
+        Minimum confidence required to record a prediction.
+
+    Returns
+    -------
+    str or None
+        Most frequent predicted class name, or None if history is empty.
+    """
     input_data = np.expand_dims(np.array(sequence), axis=0)
     input_data = normalise(input_data)
 
@@ -103,7 +139,7 @@ while True:
             cv2.circle(frame, (centre_x, centre_y), 5, (255, 197, 211), -1)
         
     if face_detected:
-        face_sequence.append(frame_features)
+        face_sequence.append(face_features)
     else:
         face_prediction_history.clear()
         face_sequence = []
@@ -122,7 +158,7 @@ while True:
             last_face_prediction = face_label
     
     ## Display
-    text_w, text_h, baseline = cv2.getTextSize(last_face_prediction, cv2.FONT_HERSHEY_SIMPLEX, 1.2, 2)
+    (text_w, text_h), baseline = cv2.getTextSize(last_face_prediction, cv2.FONT_HERSHEY_SIMPLEX, 1.2, 2)
     cv2.rectangle(frame, (10, 10), (20 + text_w, 20 + text_h + baseline), (0, 0, 0), -1)
     cv2.putText(frame, f"Face: {last_face_prediction}", (15, frame_height - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
     cv2.imshow("BSL Live Captioning", frame)

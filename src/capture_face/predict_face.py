@@ -7,15 +7,16 @@ Loads .npy sequence files from data/face/<class_name>/, trains an LSTM classifie
 and saves the model, training history plot, and confusion matrix to models/evaluation/face.
 
 Output:
-    models/detection_model/hand_model.h5
-    models/evaluation/hand/training_history.png
-    models/evaluation/hand/confusion_matrix.png
+    models/detection_model/face_model.h5
+    models/evaluation/face/training_history.png
+    models/evaluation/face/confusion_matrix.png
 """
 
 import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+from config import *
 from tensorflow import keras
 from keras.models import Sequential
 from keras.utils import to_categorical
@@ -24,22 +25,26 @@ from keras.layers import LSTM, Dense, Dropout
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 
-# Configuration
-data_path = 'data/face'
-sequence_length = 10
-num_features = 3
-
-# Load Data
+# Helpers
 def load_data():
     """
-    Docstring for load_data
+        Load data - append to sequences [] sort class names
+
+    Parameters:
+    -----------
+
+    Returns:
+    --------
+    np.array sequences
+    np.array class numbers
+    class names
     """
     sequences = []
     class_numbers = []
     class_names = []
 
-    for folder in os.listdir(data_path):
-        folder_path = os.path.join(data_path, folder)
+    for folder in os.listdir(face_data_path):
+        folder_path = os.path.join(face_data_path, folder)
 
         if os.path.isdir(folder_path):
             class_names.append(folder)
@@ -51,14 +56,14 @@ def load_data():
 
     # Load each sequence
     for class_name in class_names:
-        class_path = os.path.join(data_path, class_name)
+        class_path = os.path.join(face_data_path, class_name)
 
         for file in os.listdir(class_path):
             if file.endswith(".npy"):
                 filepath = os.path.join(class_path, file)
                 sequence = np.load(filepath)
 
-                if sequence.shape == (sequence_length, num_features):
+                if sequence.shape == (face_sequence_length, face_num_features):
                     sequences.append(sequence)
                     class_numbers.append(label_map[class_name])
                 else:
@@ -67,19 +72,25 @@ def load_data():
     return np.array(sequences), np.array(class_numbers), class_names
 
 
-# Normalisation
 def normalize_data(input_data):
     """
-    Docstring for normalize_data
-    
-    :param X: Description
+    Normalize a sequence array along the time and feature axis
+
+    Parameters:
+    -----------
+    input_data : np.ndarray, shape (batch, frames, features)
+                Raw input sequences
+
+    Returns:
+    --------
+    np.ndarray
+        Zero mean, unit variance normalized array.
     """
     mean = np.mean(input_data, axis = (1, 2), keepdims = True)
     std = np.std(input_data, axis = (1, 2), keepdims = True) + 1e-8
     return (input_data - mean) / std
 
-
-# Load dataset
+# -------------------------------------------------------------------
 sequences, class_numbers, class_names = load_data()
  
 if len(sequences) == 0:
@@ -93,7 +104,7 @@ X_train, X_test, y_train, y_test = train_test_split(sequences, class_numbers, te
 
 # Build model
 model = Sequential([
-    LSTM(32, input_shape=(sequence_length, num_features)),
+    LSTM(32, input_shape = (face_sequence_length, face_num_features)),
     Dropout(0.4),                                        # Prevent overfitting
     Dense(32, activation = "relu"),                      # Dense decision layer
     Dropout(0.3),
@@ -108,7 +119,6 @@ model.compile(
 
 model.summary()
 
-# Early Stopping to prevent overfitting
 early_stop = EarlyStopping(
     monitor="val_loss",
     patience=5,
@@ -126,6 +136,11 @@ history = model.fit(
 )
 
 # Evaluate Model
+
+os.makedirs("models/evaluation/face", exist_ok = True)
+os.makedirs("models/detection_model", exist_ok = True)
+os.makedirs("models/class_names", exist_ok = True)
+
 loss, accuracy = model.evaluate(X_test, y_test)
 print("Final Test Accuracy:", accuracy)
 
@@ -166,11 +181,8 @@ display.plot(ax=ax, xticks_rotation = 45)
 
 plt.tight_layout()
 plt.savefig("models/evaluation/face/confusion_matrix.png")
-os.makedirs("models/evaluation/face", exist_ok = True)
 plt.show()
 
 # Save model
-os.makedirs("models", exist_ok = True)
 model.save(f"models/detection_model/face_model.h5")
-os.makedirs("models/detection_model", exist_ok = True)
 print("Model saved to models")

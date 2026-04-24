@@ -1,5 +1,15 @@
-# bsl_live.py — Parallel hand + face inference for BSL live captioning
- 
+"""
+hand_model.py
+-----------------
+Live hand and face gesture recognition using pre-trained LSTM model.
+
+Loads a trained model and runs real time inference on webcam input,
+displying the predicted BSL sign on screen.
+
+Controls:
+    q - quit
+"""
+
 import os
 import cv2
 import numpy as np
@@ -12,18 +22,24 @@ from keras.models import load_model
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-# MediaPipe Detectors
+
+# Load model and class names 
+hand_model = load_model(hand_model_path)
+hand_class_names = list(np.load(hand_class_path, allow_pickle = True))
+
+face_model = load_model(face_model_path)
+face_class_names = list(np.load(face_class_path, allow_pickle = True))
 
 # MediaPipe Setup - Hand detector
-base_opts_hand = python.BaseOptions(model_asset_path="models/hand_landmarker.task")
+base_opts_hand = python.BaseOptions(model_asset_path = hand_landmarker_path)
 hand_detector  = vision.HandLandmarker.create_from_options(
-    vision.HandLandmarkerOptions(base_options=base_opts_hand, num_hands=2)
+    vision.HandLandmarkerOptions(base_options=base_opts_hand, num_hands = 2)
 )
 
 # MediaPipe Setup - Face detector
-base_opts_face = python.BaseOptions(model_asset_path="models/face_landmarker.task")
+base_opts_face = python.BaseOptions(model_asset_path = face_landmarker_path)
 face_detector  = vision.FaceLandmarker.create_from_options(
-    vision.FaceLandmarkerOptions(base_options=base_opts_face, num_faces=1)
+    vision.FaceLandmarkerOptions(base_options=base_opts_face, num_faces = 1)
 )
 
 # State
@@ -37,12 +53,50 @@ display_text = "..."
 
 # Helpers
 def normalise(arr):
+    """
+    Normalize a sequence array along the time and feature axis
+
+    Parameters:
+    -----------
+    input_data : np.ndarray, shape (batch, frames, features)
+                Raw input sequences
+
+    Returns:
+    --------
+    np.ndarray
+        Zero mean, unit variance normalized array.
+    """
     mean = np.mean(arr, axis=(1, 2), keepdims = True)
     std  = np.std(arr,  axis=(1, 2), keepdims = True) + 1e-8
     return (arr - mean) / std
 
 
 def predict_class(model, sequence, class_names, prediction_history, threshold):
+    """
+    Run inference on a landmark sequence and return the smoothed prediction.
+
+    Predictions below the confidence threshold are discarded. The most
+    frequent prediction across the smoothing window is returned.
+
+    Parameters
+    ----------
+    model : keras.Model
+        Trained LSTM classifier.
+    sequence : list of list[float]
+        Sliding window of normalised landmark frames.
+    class_names : list[str]
+        Ordered list of class labels matching model output indices.
+    prediction_history : collections.deque
+        Rolling buffer of recent high-confidence prediction indices.
+    threshold : float
+        Minimum confidence required to record a prediction.
+
+    Returns
+    -------
+    str or None
+        Most frequent predicted class name, or None if history is empty.
+    """
+
     input_data = np.expand_dims(np.array(sequence), axis = 0)
     input_data = normalise(input_data)
 
@@ -70,7 +124,7 @@ while True:
         break
 
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
+    mp_image = mp.Image(image_format = mp.ImageFormat.SRGB, data = rgb)
 
     # Hand Pipeline
     hand_result = hand_detector.detect(mp_image)
