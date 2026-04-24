@@ -17,17 +17,15 @@ import cv2
 import numpy as np
 import mediapipe as mp
 
-from config import *
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-# Configuration
-sequence = []
-recording = False
-
-# Save frames into .npy file in folder of choice
+# CONFIGURATION
+sequence    = []
+recording   = False
 save_folder = "data/face"
-os.makedirs(save_folder, exist_ok = True)
+face_sequence_length = 10
+face_landmarker_path = "models/mediaPipe/face_landmarker.task"
 
 # Load model
 base_options_face = python.BaseOptions(model_asset_path = face_landmarker_path )

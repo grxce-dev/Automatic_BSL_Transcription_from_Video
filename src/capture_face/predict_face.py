@@ -16,7 +16,6 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from config import *
 from tensorflow import keras
 from keras.models import Sequential
 from keras.utils import to_categorical
@@ -24,6 +23,12 @@ from keras.callbacks import EarlyStopping
 from keras.layers import LSTM, Dense, Dropout
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
+
+# CONFIGURATION
+face_sequence_length = 10
+face_num_features    = 2
+face_data_path       = "data/face"
+face_class_path      = "models/class_names/face_class_names.npy"
 
 # Helpers
 def load_data():
@@ -120,9 +125,9 @@ model.compile(
 model.summary()
 
 early_stop = EarlyStopping(
-    monitor="val_loss",
-    patience=5,
-    restore_best_weights=True
+    monitor = "val_loss",
+    patience = 5,
+    restore_best_weights = True
 )
 
 # Train Model

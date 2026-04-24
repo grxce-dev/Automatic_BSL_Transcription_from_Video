@@ -22,11 +22,9 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
 # Configuration
-sequence_length = 30
 sequence = []
 recording = False
-
-# Change this to the class name you are recording before each session
+sequence_length = 30
 save_folder = "data/hand/"
 
 # Load model

@@ -17,7 +17,6 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from config import *
 from tensorflow import keras
 from keras.models import Sequential
 from keras.utils import to_categorical
@@ -26,10 +25,24 @@ from keras.layers import LSTM, Dense, Dropout
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix 
 
+# CONFIGURATION
+hand_sequence_length = 30
+hand_num_features    = 126
+hand_data_path       = "data/hand"
+
 # Helpers
 def load_data():
     """
-    Docstring for load_data
+        Load data - append to sequences [] sort class names
+
+    Parameters:
+    -----------
+
+    Returns:
+    --------
+    np.array sequences
+    np.array class numbers
+    class names
     """
     sequences = []           
     class_numbers = []                
@@ -44,7 +57,7 @@ def load_data():
     class_names.sort()
     label_map = {name: idx for idx, name in enumerate(class_names)}
 
-    np.save("models/hand/hand_class_names.npy", class_names)
+    np.save("models/class_names/hand_class_names.npy", class_names)
     
     # Load each sequence
     for class_name in class_names:
