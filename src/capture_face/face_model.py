@@ -22,7 +22,7 @@ from collections import deque, Counter
 from mediapipe.tasks.python import vision
 
 # CONFIGURATION:
-face_sequence_length = 10
+face_sequence_length = 15
 face_num_features    = 6
 confidence_threshold = 0.6
 smoothing_window     = 5
@@ -118,7 +118,7 @@ while True:
     mp_image = mp.Image(image_format = mp.ImageFormat.SRGB, data = rgb)
 
     face_result = detector.detect(mp_image)
-    frame_features = [0.0, 0.0]
+    frame_features = [0.0] * 6
     face_detected = False
 
     # Detect Face
@@ -174,13 +174,21 @@ while True:
             last_face_prediction = face_label
     
     ## Display
-    (text_w, text_h), baseline = cv2.getTextSize(last_face_prediction, cv2.FONT_HERSHEY_SIMPLEX, 1.2, 2)
-    cv2.rectangle(frame, (10, 10), (20 + text_w, 20 + text_h + baseline), (0, 0, 0), -1)
-    cv2.putText(frame, f"Face: {last_face_prediction}", (15, frame_height - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
+    face_display = f"Face: {last_face_prediction}"
+    (fw, fh), fb = cv2.getTextSize(
+        face_display, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2
+    )
+    cv2.rectangle(frame, (8, 8), (fw + 16, fh + fb + 16), (0, 0, 0), -1)
+    cv2.putText(
+        frame, face_display,
+        (12, fh + 12),
+        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (200, 200, 200), 2
+    )
+
     cv2.imshow("BSL Live Captioning", frame)
 
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
- 
+
 cap.release()
 cv2.destroyAllWindows()

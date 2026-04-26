@@ -29,7 +29,7 @@ hand_model_path      = "models/detection_model/hand_model.h5"
 hand_class_path      = "models/class_names/hand_class_names.npy"
 
 # Face model  
-face_sequence_length = 10
+face_sequence_length = 15
 face_num_features    = 6
 face_data_path       = "data/face"
 face_model_path      = "models/detection_model/face_model.h5"
@@ -185,7 +185,7 @@ while True:
 
     # Face Pipeline
     face_result = face_detector.detect(mp_image)
-    face_features = [0.0, 0.0] * 6
+    face_features = [0.0] * 6
     face_detected = False
 
     if face_result.face_landmarks:
@@ -262,12 +262,36 @@ while True:
     elif not hand_detected:
         display_text = "..."
 
-    # Display
-    (text_w, text_h), baseline = cv2.getTextSize(display_text, cv2.FONT_HERSHEY_SIMPLEX, 1.2, 2)
-    cv2.rectangle(frame, (10, 10), (20 + text_w, 20 + text_h + baseline), (0, 0, 0), -1)
-    
-    cv2.putText(frame, display_text, (15, 15 + text_h), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2)
-    cv2.putText(frame, f"Face: {last_face_prediction}", (15, frame_height - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
+    # Display — capture (centre bottom)
+    (text_w, text_h), baseline = cv2.getTextSize(
+        display_text, cv2.FONT_HERSHEY_SIMPLEX, 1.2, 2
+    )
+    text_x = (frame_width - text_w) // 2      # horizontally centred
+    text_y = frame_height - 40                 # near bottom
+
+    cv2.rectangle(
+        frame,
+        (text_x - 10, text_y - text_h - 10),
+        (text_x + text_w + 10, text_y + baseline + 5),
+        (0, 0, 0), -1
+    )
+    cv2.putText(
+        frame, display_text,
+        (text_x, text_y),
+        cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2
+    )
+
+    # Face prediction — top left for debugging
+    face_display = f"Face: {last_face_prediction}"
+    (fw, fh), fb = cv2.getTextSize(
+        face_display, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2
+    )
+    cv2.rectangle(frame, (8, 8), (fw + 16, fh + fb + 16), (0, 0, 0), -1)
+    cv2.putText(
+        frame, face_display,
+        (12, fh + 12),
+        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (200, 200, 200), 2
+    )
 
     cv2.imshow("BSL Live Captioning", frame)
 
