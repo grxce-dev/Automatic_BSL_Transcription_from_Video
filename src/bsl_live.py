@@ -283,14 +283,10 @@ while True:
 
     # Face prediction — top left for debugging
     face_display = f"Face: {last_face_prediction}"
-    (fw, fh), fb = cv2.getTextSize(
-        face_display, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2
-    )
+    (fw, fh), fb = cv2.getTextSize(face_display, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)
     cv2.rectangle(frame, (8, 8), (fw + 16, fh + fb + 16), (0, 0, 0), -1)
-    cv2.putText(
-        frame, face_display,
-        (12, fh + 12),
-        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (200, 200, 200), 2
+    cv2.putText(frame, face_display, (12, fh + 12),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (200, 200, 200), 2
     )
 
     cv2.imshow("BSL Live Captioning", frame)

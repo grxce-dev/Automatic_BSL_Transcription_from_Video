@@ -33,16 +33,21 @@ face_class_path      = "models/class_names/face_class_names.npy"
 # Helpers
 def load_data():
     """
-        Load data - append to sequences [] sort class names
+    Load face landmark sequences and class labels.
 
-    Parameters:
-    -----------
+    Scans face_data_path for class subdirectories, loads all valid .npy
+    files, and filters sequences that do not match the expected shape.
+    Class names are sorted alphabetically to ensure consistent label mapping
+    across training.
 
-    Returns:
-    --------
-    np.array sequences
-    np.array class numbers
-    class names
+    Returns
+    -------
+    sequences : np.ndarray, shape (n_samples, face_sequence_length, face_num_features)
+        Normalised landmark sequences.
+    class_numbers : np.ndarray, shape (n_samples,)
+        Integer label for each sequence.
+    class_names : list[str]
+        Alphabetically sorted class labels.
     """
     sequences = []
     class_numbers = []

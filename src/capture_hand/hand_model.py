@@ -21,8 +21,6 @@ from keras.models import load_model
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-hand_class_names
-
 # CONFIGURATION
 hand_sequence_length = 30
 hand_num_features    = 126

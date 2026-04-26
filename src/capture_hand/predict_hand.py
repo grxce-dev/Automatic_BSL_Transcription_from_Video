@@ -33,16 +33,21 @@ hand_data_path       = "data/hand"
 # Helpers
 def load_data():
     """
-        Load data - append to sequences [] sort class names
+    Load hand landmark sequences and class labels.
 
-    Parameters:
-    -----------
+    Scans hand_data_path for class subdirectories, loads all valid .npy
+    files, and filters sequences that do not match the expected shape.
+    Class names are sorted alphabetically to ensure consistent label mapping
+    across training.
 
-    Returns:
-    --------
-    np.array sequences
-    np.array class numbers
-    class names
+    Returns
+    -------
+    sequences : np.ndarray, shape (n_samples, hand_sequence_length, hand_num_features)
+        Normalised landmark sequences.
+    class_numbers : np.ndarray, shape (n_samples,)
+        Integer label for each sequence.
+    class_names : list[str]
+        Alphabetically sorted class labels.
     """
     sequences = []           
     class_numbers = []                
@@ -188,8 +193,6 @@ plt.tight_layout()
 plt.savefig(f"models/evaluation/hand/confusion_matrix{accuracy:.2f}.png")
 print("Confusion Matrix")
 
-
 # Save model
 model.save(f"models/detection_model/hand_model.h5")
-os.makedirs("models/detection_model", exist_ok = True)
 print("Model saved to models")

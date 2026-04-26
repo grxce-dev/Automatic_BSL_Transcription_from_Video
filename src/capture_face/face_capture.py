@@ -78,7 +78,7 @@ while True:
         break
 
     if recording:
-        face_features = [0,0] * 6
+        face_features = [0.0] * 6
         
         if result.face_landmarks:
             
