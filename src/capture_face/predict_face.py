@@ -25,7 +25,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 
 # CONFIGURATION
-face_sequence_length = 10
+face_sequence_length = 20
 face_num_features    = 6
 face_data_path       = "data/face"
 face_class_path      = "models/class_names/face_class_names.npy"
@@ -110,9 +110,9 @@ X_train, X_test, y_train, y_test = train_test_split(sequences, class_numbers, te
 # Build model
 model = Sequential([
     LSTM(32, input_shape = (face_sequence_length, face_num_features)),
-    Dropout(0.4),                                        # Prevent overfitting
+    Dropout(0.2),                                        # Prevent overfitting
     Dense(32, activation = "relu"),                      # Dense decision layer
-    Dropout(0.3),
+    Dropout(0.1),
     Dense(len(class_names), activation = "softmax")      # Output layer (multi-class softmax)
 ])
 
@@ -134,7 +134,7 @@ early_stop = EarlyStopping(
 history = model.fit(
     X_train, y_train,
     epochs = 30,
-    batch_size = 64,
+    batch_size = 8,
     validation_data = (X_test, y_test),
     callbacks = [early_stop],
     shuffle = True
@@ -188,3 +188,5 @@ plt.savefig(f"models/evaluation/face/confusion_matrix{accuracy:.4f}_2.png")
 # Save model
 model.save(f"models/detection_model/face_model.h5")
 print("Model saved to models")
+
+

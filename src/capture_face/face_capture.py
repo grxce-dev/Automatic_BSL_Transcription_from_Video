@@ -24,7 +24,7 @@ from mediapipe.tasks.python import vision
 sequence    = []
 recording   = False
 save_folder = "data/face/shake"
-face_sequence_length = 10
+face_sequence_length = 20
 face_landmarker_path = "models/mediaPipe/face_landmarker.task"
 
 # Load model
@@ -78,7 +78,7 @@ while True:
         break
 
     if recording:
-        frame_features = [0,0] * 6
+        face_features = [0,0] * 6
         
         if result.face_landmarks:
             

@@ -185,7 +185,7 @@ while True:
 
     # Face Pipeline
     face_result = face_detector.detect(mp_image)
-    face_features = [0.0, 0.0]
+    face_features = [0.0, 0.0] * 6
     face_detected = False
 
     if face_result.face_landmarks:
