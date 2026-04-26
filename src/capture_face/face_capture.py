@@ -23,8 +23,8 @@ from mediapipe.tasks.python import vision
 # CONFIGURATION
 sequence    = []
 recording   = False
+face_sequence_length = 15
 save_folder = "data/face/shake"
-face_sequence_length = 20
 face_landmarker_path = "models/mediaPipe/face_landmarker.task"
 
 # Load model

@@ -25,7 +25,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 
 # CONFIGURATION
-face_sequence_length = 20
+face_sequence_length = 15
 face_num_features    = 6
 face_data_path       = "data/face"
 face_class_path      = "models/class_names/face_class_names.npy"
