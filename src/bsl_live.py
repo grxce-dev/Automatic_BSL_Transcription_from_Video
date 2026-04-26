@@ -36,7 +36,7 @@ face_model_path      = "models/detection_model/face_model.h5"
 face_class_path      = "models/class_names/face_class_names.npy"
 
 # Model
-confidence_threshold = 0.6
+confidence_threshold = 0.4 # 0.6 usually - 0.4 for testing
 smoothing_window     = 5
 
 # MediaPipe
@@ -250,9 +250,10 @@ while True:
     # hand sign  :  { face state → modified output }
 
     modifier_map = {
-        "NO"        : { "NOD": None,         "SHAKE": "NO",               "NEUTRAL": None },
-        "YES"       : { "NOD": "YES",        "SHAKE": None,               "NEUTRAL": None },
-        "UNDERSTAND": { "NOD": "UNDERSTAND", "SHAKE": "DON'T UNDERSTAND", "NEUTRAL": None }
+        "no"        : { "nod": None,         "shake": "no",               "neutral": None },
+        "yes"       : { "nod": "yes",        "shake": None,               "neutral": None },
+        "understand_point": { "nod": "understand", "shake": "don't understand", "neutral": None },
+        "understand_flick": { "nod": "understand", "shake": "don't understand", "neutral": None }
     }
     
     if hand_label:
@@ -281,14 +282,22 @@ while True:
         cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2
     )
 
-    # Face prediction — top left for debugging
-    face_display = f"Face: {last_face_prediction}"
+    # Face prediction — top left, shows label and live confidence
+    if len(face_sequence) == face_sequence_length:
+        input_data = np.expand_dims(np.array(face_sequence), axis = 0)
+        input_data = normalise(input_data)
+        raw_pred = face_model.predict(input_data, verbose=0)
+        face_confidence = float(np.max(raw_pred))
+    else:
+        face_confidence = 0.0
+
+    face_display = f"Face: {last_face_prediction} ({face_confidence:.0%})"
     (fw, fh), fb = cv2.getTextSize(face_display, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)
     cv2.rectangle(frame, (8, 8), (fw + 16, fh + fb + 16), (0, 0, 0), -1)
     cv2.putText(frame, face_display, (12, fh + 12),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (200, 200, 200), 2
-    )
+                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (200, 200, 200), 2)
 
+    
     cv2.imshow("BSL Live Captioning", frame)
 
     if cv2.waitKey(1) & 0xFF == ord("q"):
