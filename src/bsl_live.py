@@ -250,14 +250,15 @@ while True:
     # hand sign  :  { face state → modified output }
 
     modifier_map = {
-        "UNDERSTAND": { "NOD": "UNDERSTAND", "SHAKE": "DON'T UNDERSTAND", "NEUTRAL": None },
-        "YES": {"NOD": "YES", "SHAKE": None, "NEUTRAL": None },
-        "NO": {"NOD": None, "SHAKE": "NO", "NEUTRAL": None }
+        "NO"        : { "NOD": None,         "SHAKE": "NO",               "NEUTRAL": None },
+        "YES"       : { "NOD": "YES",        "SHAKE": None,               "NEUTRAL": None },
+        "UNDERSTAND": { "NOD": "UNDERSTAND", "SHAKE": "DON'T UNDERSTAND", "NEUTRAL": None }
     }
     
     if hand_label:
         modifiers = modifier_map.get(hand_label, {})
-        display_text = modifiers.get(last_face_prediction, hand_label)
+        result = modifiers.get(last_face_prediction, hand_label)
+        display_text = result if result is not None else hand_label
     elif not hand_detected:
         display_text = "..."
 

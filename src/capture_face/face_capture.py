@@ -23,7 +23,7 @@ from mediapipe.tasks.python import vision
 # CONFIGURATION
 sequence    = []
 recording   = False
-save_folder = "data/face"
+save_folder = "data/face/shake"
 face_sequence_length = 10
 face_landmarker_path = "models/mediaPipe/face_landmarker.task"
 
@@ -59,7 +59,7 @@ while True:
     # Draw landmarks
     for face_landmarks in result.face_landmarks:
         h, w, _ = frame.shape
-        indices = [1, 468, 473] # Nose = 1, Left eye centre = 468, Right eye centre = 473
+        indices = [1, 468, 473, 61, 291] # (nose, eye_l, eye_r, mouth_l, mouth_r)
         for index in indices:
             landmark = face_landmarks[index]
             cx, cy = int(landmark.x * w), int(landmark.y * h)
@@ -78,7 +78,7 @@ while True:
         break
 
     if recording:
-        frame_features = [0,0]
+        frame_features = [0,0] * 6
         
         if result.face_landmarks:
             

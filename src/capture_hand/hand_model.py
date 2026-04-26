@@ -21,6 +21,8 @@ from keras.models import load_model
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
+hand_class_names
+
 # CONFIGURATION
 hand_sequence_length = 30
 hand_num_features    = 126
@@ -160,8 +162,6 @@ while True:
             hand_class_names, hand_prediction_history,
             confidence_threshold
         )
-        
-        hand_class_names = list(np.load(hand_class_path, allow_pickle=True))
 
         if hand_label:
             display_text = hand_label

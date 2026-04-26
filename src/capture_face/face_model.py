@@ -28,7 +28,7 @@ confidence_threshold = 0.6
 smoothing_window     = 5
 face_model_path      = "models/detection_model/face_model.h5"
 face_class_path      = "models/class_names/face_class_names.npy"
-face_landmarker_path = "models/mediaPope/face_landmarker.task"
+face_landmarker_path = "models/mediaPipe/face_landmarker.task"
 
 # Load Model and Face classes 
 face_model = load_model(face_model_path)
