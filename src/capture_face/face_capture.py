@@ -83,25 +83,29 @@ while True:
         if result.face_landmarks:
             
             face = result.face_landmarks[0]
-            nose = face[1]
-            left_eye = face[468]
+
+            nose      = face[1]
+            left_eye  = face[468]
             right_eye = face[473]
+            mouth_l   = face[61]
+            mouth_r   = face[291]
 
             eye_centre_x = (left_eye.x + right_eye.x) / 2
             eye_centre_y = (left_eye.y + right_eye.y) / 2
-
-            eye_dist = ((
-                (left_eye.x - right_eye.x) **2 + 
-                (left_eye.y - right_eye.y) **2
-                ) **0.5)
+            eye_dist = (((left_eye.x - right_eye.x)**2 +
+                        (left_eye.y - right_eye.y)**2) ** 0.5)
 
             if eye_dist > 0:
-                nose_rel_x = (nose.x - eye_centre_x) / eye_dist
-                nose_rel_y = (nose.y - eye_centre_y) / eye_dist
+                face_features = [
+                    (nose.x    - eye_centre_x) / eye_dist,
+                    (nose.y    - eye_centre_y) / eye_dist,
+                    (mouth_l.x - eye_centre_x) / eye_dist,
+                    (mouth_l.y - eye_centre_y) / eye_dist,
+                    (mouth_r.x - eye_centre_x) / eye_dist,
+                    (mouth_r.y - eye_centre_y) / eye_dist,
+                ]
 
-                frame_features = [nose_rel_x, nose_rel_y]
-
-        sequence.append(frame_features)
+        sequence.append(face_features)
         print("Frames:", len(sequence))
 
         # End recording and save

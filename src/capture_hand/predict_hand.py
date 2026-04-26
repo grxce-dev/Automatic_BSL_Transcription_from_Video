@@ -134,13 +134,17 @@ early_stop = EarlyStopping(
 history = model.fit(
     X_train, y_train,
     epochs = 30,
-    batch_size = 16,
+    batch_size = 64,
     validation_data = (X_test, y_test),
     callbacks = [early_stop],
     shuffle = True
 )
 
 # Evaluate model
+os.makedirs("models/evaluation/hand", exist_ok = True)
+os.makedirs("models/detection_model", exist_ok = True)
+os.makedirs("models/class_names", exist_ok = True)
+
 loss, accuracy = model.evaluate(X_test, y_test)
 print("Final Test Accuracy:", accuracy)
 
@@ -153,7 +157,7 @@ for i in range(10):
           "True:", class_names[true_labels[i]])
 
 
-plt.figure(figsize=(12, 4))
+plt.figure(figsize = (12, 4))
 
 plt.subplot(1, 2, 1)
 plt.plot(history.history['accuracy'], label = 'Train')
@@ -172,22 +176,20 @@ plt.ylabel('Loss')
 plt.legend()
 
 plt.tight_layout()
-plt.savefig("models/evaluation/hand/training_history.png")
-plt.show()
+plt.savefig(f"models/evaluation/hand/training_history{accuracy:.2f}.png")
+print("Training History")
 
 cm = confusion_matrix(true_labels, pred_labels)
 display = ConfusionMatrixDisplay(confusion_matrix = cm, display_labels = class_names)
-figure, ax = plt.subplots(figsize=(14, 14))
+figure, ax = plt.subplots(figsize = (14, 14))
 display.plot(ax=ax, xticks_rotation = 45)
 
 plt.tight_layout()
-plt.savefig("models/evaluation/hand/confusion_matrix.png")
-os.makedirs("models/evaluation/hand", exist_ok = True)
-plt.show()
+plt.savefig(f"models/evaluation/hand/confusion_matrix{accuracy:.2f}.png")
+print("Confusion Matrix")
 
 
 # Save model
-os.makedirs("models", exist_ok = True)
 model.save(f"models/detection_model/hand_model.h5")
 os.makedirs("models/detection_model", exist_ok = True)
 print("Model saved to models")

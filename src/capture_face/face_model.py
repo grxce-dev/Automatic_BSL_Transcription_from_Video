@@ -23,19 +23,19 @@ from mediapipe.tasks.python import vision
 
 # CONFIGURATION:
 face_sequence_length = 10
-face_model_path      = "models/detection_model/face_model.h5"
-face_class_path      = "models/class_names/face_class_names.npy"
-# Model
+face_num_features    = 6
 confidence_threshold = 0.6
 smoothing_window     = 5
-
+face_model_path      = "models/detection_model/face_model.h5"
+face_class_path      = "models/class_names/face_class_names.npy"
+face_landmarker_path = "models/mediaPope/face_landmarker.task"
 
 # Load Model and Face classes 
 face_model = load_model(face_model_path)
 face_class_names = list(np.load(face_class_path, allow_pickle = True))
 
 # MediaPipe Setup - Face
-base_options = python.BaseOptions(model_asset_path = face_model_path)
+base_options = python.BaseOptions(model_asset_path = face_landmarker_path)
 options = vision.FaceLandmarkerOptions( base_options = base_options, num_faces = 1)
 detector = vision.FaceLandmarker.create_from_options(options)
 
@@ -124,18 +124,26 @@ while True:
     # Detect Face
     if face_result.face_landmarks:
         face = face_result.face_landmarks[0]
-        nose = face[1]
-        left_eye = face[468]
+
+        nose      = face[1]
+        left_eye  = face[468]
         right_eye = face[473]
+        mouth_l   = face[61]
+        mouth_r   = face[291]
 
         eye_centre_x = (left_eye.x + right_eye.x) / 2
         eye_centre_y = (left_eye.y + right_eye.y) / 2
-        eye_distance = ((left_eye.x - right_eye.x) **2 + (left_eye.y - right_eye.y) **2) ** 0.5
+        eye_dist = (((left_eye.x - right_eye.x)**2 +
+                    (left_eye.y - right_eye.y)**2) ** 0.5)
 
-        if eye_distance > 0:
+        if eye_dist > 0:
             face_features = [
-                (nose.x - eye_centre_x) / eye_distance,
-                (nose.y - eye_centre_y) / eye_distance,
+                (nose.x    - eye_centre_x) / eye_dist,
+                (nose.y    - eye_centre_y) / eye_dist,
+                (mouth_l.x - eye_centre_x) / eye_dist,
+                (mouth_l.y - eye_centre_y) / eye_dist,
+                (mouth_r.x - eye_centre_x) / eye_dist,
+                (mouth_r.y - eye_centre_y) / eye_dist,
             ]
             face_detected = True
 

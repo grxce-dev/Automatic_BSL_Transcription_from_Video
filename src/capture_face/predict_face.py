@@ -26,7 +26,7 @@ from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 
 # CONFIGURATION
 face_sequence_length = 10
-face_num_features    = 2
+face_num_features    = 6
 face_data_path       = "data/face"
 face_class_path      = "models/class_names/face_class_names.npy"
 
@@ -134,14 +134,13 @@ early_stop = EarlyStopping(
 history = model.fit(
     X_train, y_train,
     epochs = 30,
-    batch_size = 16,
+    batch_size = 64,
     validation_data = (X_test, y_test),
     callbacks = [early_stop],
     shuffle = True
 )
 
 # Evaluate Model
-
 os.makedirs("models/evaluation/face", exist_ok = True)
 os.makedirs("models/detection_model", exist_ok = True)
 os.makedirs("models/class_names", exist_ok = True)
@@ -176,8 +175,7 @@ plt.ylabel('Loss')
 plt.legend()
 
 plt.tight_layout()
-plt.savefig("models/evaluation/face/training_history.png")
-plt.show()
+plt.savefig(f"models/evaluation/face/training_history{accuracy:.4f}_2.png")
 
 cm = confusion_matrix(true_labels, pred_labels)
 display = ConfusionMatrixDisplay(confusion_matrix = cm, display_labels = class_names)
@@ -185,8 +183,7 @@ figure, ax = plt.subplots(figsize = (14, 14))
 display.plot(ax=ax, xticks_rotation = 45)
 
 plt.tight_layout()
-plt.savefig("models/evaluation/face/confusion_matrix.png")
-plt.show()
+plt.savefig(f"models/evaluation/face/confusion_matrix{accuracy:.4f}_2.png")
 
 # Save model
 model.save(f"models/detection_model/face_model.h5")

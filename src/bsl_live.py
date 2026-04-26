@@ -1,5 +1,5 @@
 """
-hand_model.py
+bsl_live.py
 -----------------
 Live hand and face gesture recognition using pre-trained LSTM model.
 
@@ -30,7 +30,7 @@ hand_class_path      = "models/class_names/hand_class_names.npy"
 
 # Face model  
 face_sequence_length = 10
-face_num_features    = 2
+face_num_features    = 6
 face_data_path       = "data/face"
 face_model_path      = "models/detection_model/face_model.h5"
 face_class_path      = "models/class_names/face_class_names.npy"
@@ -190,18 +190,25 @@ while True:
 
     if face_result.face_landmarks:
         face = face_result.face_landmarks[0]
-        nose = face[1]
-        left_eye = face[468]
+        nose      = face[1]
+        left_eye  = face[468]
         right_eye = face[473]
+        mouth_l   = face[61]
+        mouth_r   = face[291]
 
         eye_centre_x = (left_eye.x + right_eye.x) / 2
         eye_centre_y = (left_eye.y + right_eye.y) / 2
-        eye_distance = ((left_eye.x - right_eye.x) **2 + (left_eye.y - right_eye.y) **2) ** 0.5
+        eye_dist = (((left_eye.x - right_eye.x)**2 +
+                    (left_eye.y - right_eye.y)**2) ** 0.5)
 
-        if eye_distance > 0:
+        if eye_dist > 0:
             face_features = [
-                (nose.x - eye_centre_x) / eye_distance,
-                (nose.y - eye_centre_y) / eye_distance,
+                (nose.x    - eye_centre_x) / eye_dist,
+                (nose.y    - eye_centre_y) / eye_dist,
+                (mouth_l.x - eye_centre_x) / eye_dist,
+                (mouth_l.y - eye_centre_y) / eye_dist,
+                (mouth_r.x - eye_centre_x) / eye_dist,
+                (mouth_r.y - eye_centre_y) / eye_dist,
             ]
             face_detected = True
 
