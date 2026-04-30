@@ -60,7 +60,10 @@ def load_data():
             class_names.append(folder)
 
     class_names.sort()
-    label_map = {name: idx for idx, name in enumerate(class_names)}
+    label_map = {
+        name: idx 
+        for idx, name in enumerate(class_names)
+        }
 
     np.save("models/class_names/hand_class_names.npy", class_names)
     
@@ -106,7 +109,7 @@ if len(sequences) == 0:
     raise ValueError("No data found — check data path and that .npy files exist.")
 
 sequences = normalize_data(sequences)
-class_numbers = to_categorical(class_numbers, num_classes=len(class_names))
+class_numbers = to_categorical(class_numbers, num_classes = len(class_names))
 
 # Train/Test split
 X_train, X_test, y_train, y_test = train_test_split(sequences, class_numbers, test_size = 0.2, random_state = 42) # Currently 80/20
@@ -173,8 +176,8 @@ plt.ylabel('Accuracy')
 plt.legend()
 
 plt.subplot(1, 2, 2)
-plt.plot(history.history['loss'], label='Train')
-plt.plot(history.history['val_loss'], label='Validation')
+plt.plot(history.history['loss'], label = 'Train')
+plt.plot(history.history['val_loss'], label = 'Validation')
 plt.title('Loss over Epochs')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')

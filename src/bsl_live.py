@@ -36,7 +36,8 @@ face_model_path      = "models/detection_model/face_model.h5"
 face_class_path      = "models/class_names/face_class_names.npy"
 
 # Model
-confidence_threshold = 0.4 # 0.6 usually - 0.4 for testing
+face_confidence_threshold = 0.5 
+hand_confidence_threshold = 0.5
 smoothing_window     = 5
 
 # MediaPipe
@@ -70,6 +71,7 @@ hand_prediction_history = deque(maxlen = smoothing_window)
 face_prediction_history = deque(maxlen = smoothing_window)
 
 last_face_prediction = "NEUTRAL"
+last_hand_prediction = "..."
 display_text = "..."
 
 # Helpers
@@ -132,7 +134,6 @@ def predict_class(model, sequence, class_names, prediction_history, threshold):
         best_idx = Counter(prediction_history).most_common(1)[0][0]
         return class_names[best_idx]
     return None
-
 
 # Capture
 cap = cv2.VideoCapture(0)
@@ -213,7 +214,7 @@ while True:
             face_detected = True
 
         # Draw face landmarks
-        h, w, _ = frame.shape
+        h, w, colours = frame.shape
         for idx in [1, 468, 473, 61, 291]: # (nose, eye_l, eye_r, mouth_l, mouth_r)
             landmark = face[idx]
             centre_x, centre_y = int(landmark.x * w), int(landmark.y * h)
@@ -234,14 +235,16 @@ while True:
         hand_label = predict_class(
             hand_model, hand_sequence,
             hand_class_names, hand_prediction_history,
-            confidence_threshold
+            hand_confidence_threshold
         )
+        if hand_label:
+            last_hand_prediction = hand_label
 
     if len(face_sequence) == face_sequence_length:
         face_label = predict_class(
             face_model, face_sequence,
             face_class_names, face_prediction_history,
-            confidence_threshold
+            face_confidence_threshold
         )
         if face_label:
             last_face_prediction = face_label
@@ -262,41 +265,50 @@ while True:
         display_text = result if result is not None else hand_label
     elif not hand_detected:
         display_text = "..."
+    
 
-    # Display — capture (centre bottom)
-    (text_w, text_h), baseline = cv2.getTextSize(
-        display_text, cv2.FONT_HERSHEY_SIMPLEX, 1.2, 2
-    )
-    text_x = (frame_width - text_w) // 2      # horizontally centred
-    text_y = frame_height - 40                 # near bottom
+# ---- TESTNING ---------------------------------------------------------------------------------------------------------------
 
-    cv2.rectangle(
-        frame,
-        (text_x - 10, text_y - text_h - 10),
-        (text_x + text_w + 10, text_y + baseline + 5),
-        (0, 0, 0), -1
-    )
-    cv2.putText(
-        frame, display_text,
-        (text_x, text_y),
-        cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2
-    )
+    # Hand prediction — top left, shows label and live confidence
+    # Hand prediction — top left
+    if len(hand_sequence) == hand_sequence_length:
+        input_data = np.expand_dims(np.array(hand_sequence), axis=0)
+        input_data = normalise(input_data)
+        raw_pred = hand_model.predict(input_data, verbose=0)
+        hand_confidence = float(np.max(raw_pred))
+        predicted_idx = np.argmax(raw_pred)
+        last_hand_prediction = hand_class_names[predicted_idx]
+    else:
+        hand_confidence = 0.0
+
+    hand_display = f"Hand: {last_hand_prediction} ({hand_confidence:.0%})"
+    (fw, fh), fb = cv2.getTextSize(hand_display, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)
+    cv2.rectangle(frame, (8, 8), (fw + 16, fh + fb + 16), (0, 0, 0), -1)
+    cv2.putText(frame, hand_display, (12, fh + 12), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (200, 200, 200), 2)
 
     # Face prediction — top left, shows label and live confidence
     if len(face_sequence) == face_sequence_length:
         input_data = np.expand_dims(np.array(face_sequence), axis = 0)
         input_data = normalise(input_data)
-        raw_pred = face_model.predict(input_data, verbose=0)
+        raw_pred = face_model.predict(input_data, verbose = 0)
         face_confidence = float(np.max(raw_pred))
     else:
         face_confidence = 0.0
 
     face_display = f"Face: {last_face_prediction} ({face_confidence:.0%})"
     (fw, fh), fb = cv2.getTextSize(face_display, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)
-    cv2.rectangle(frame, (8, 8), (fw + 16, fh + fb + 16), (0, 0, 0), -1)
-    cv2.putText(frame, face_display, (12, fh + 12),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (200, 200, 200), 2)
+    cv2.rectangle(frame, (8, 40), (fw + 16, fh + fb + 48), (0, 0, 0), -1)
+    cv2.putText(frame, face_display, (12, fh + 44), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (200, 200, 200), 2)
 
+# ---------------------------------------------------------------------------------------------------------------
+
+    # Display Caption
+    (text_w, text_h), baseline = cv2.getTextSize(display_text, cv2.FONT_HERSHEY_SIMPLEX, 1.2, 2)
+    text_x = (frame_width - text_w) // 2      # horizontally centred
+    text_y = frame_height - 40                 # near bottom
+
+    cv2.rectangle(frame, (text_x - 10, text_y - text_h - 10), (text_x + text_w + 10, text_y + baseline + 5), (0, 0, 0), -1)
+    cv2.putText(frame, display_text, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2)
     
     cv2.imshow("BSL Live Captioning", frame)
 

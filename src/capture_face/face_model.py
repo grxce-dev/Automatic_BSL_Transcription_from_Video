@@ -148,7 +148,7 @@ while True:
             face_detected = True
 
         # Draw face landmarks
-        h, w, _ = frame.shape
+        h, w, colour = frame.shape
         for idx in [1, 468, 473, 61, 291]: # (nose, eye_l, eye_r, mouth_l, mouth_r)
             landmark = face[idx]
             centre_x, centre_y = int(landmark.x * w), int(landmark.y * h)

@@ -4,7 +4,7 @@ face_capture.py
 Records face (nose tip, irisis of both eyes) landmark sequences for BSL 
 gesture recognition training.
 
-Captures 10 frame sequences of face landmarks using MediaPipe.
+Captures 15 frame sequences of face landmarks using MediaPipe.
 Sequences are saved as .npy files under 'data/face/<class_name>/.
 
 Controls:
@@ -24,8 +24,10 @@ from mediapipe.tasks.python import vision
 sequence    = []
 recording   = False
 face_sequence_length = 15
-save_folder = "data/face/shake"
 face_landmarker_path = "models/mediaPipe/face_landmarker.task"
+
+# IMPORTANT: Change this to the class you are recording before each session.
+save_folder = "data/face"
 
 # Load model
 base_options_face = python.BaseOptions(model_asset_path = face_landmarker_path )
@@ -116,7 +118,7 @@ while True:
             cv2.putText(frame, "Recording Finished", (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
 
             file_count = len(os.listdir(save_folder))
-            filename = f"file_{file_count}_default.npy"
+            filename = f"file_{file_count}.npy"
             filepath = os.path.join(save_folder, filename)
 
             np.save(filepath, sequence_array)

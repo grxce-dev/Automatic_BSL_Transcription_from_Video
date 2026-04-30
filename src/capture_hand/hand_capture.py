@@ -25,12 +25,13 @@ from mediapipe.tasks.python import vision
 sequence = []
 recording = False
 sequence_length = 30
+hand_landmarker_path = "models/mediaPipe/hand_landmarker.task"
 
 # IMPORTANT: Change this to the class you are recording before each session.
 save_folder = "data/hand/"
 
 # Load model
-base_options_hands = python.BaseOptions(model_asset_path = "models/hand_landmarker.task") 
+base_options_hands = python.BaseOptions(model_asset_path = hand_landmarker_path) 
 options_hands = vision.HandLandmarkerOptions(
     base_options = base_options_hands,
     num_hands = 2
@@ -105,7 +106,7 @@ while True:
             sequence_array = np.array(sequence)
 
             file_count = len(os.listdir(save_folder))
-            filename = f"file_{file_count}_default_right.npy"
+            filename = f"file_{file_count}.npy"
             filepath = os.path.join(save_folder, filename)
 
             np.save(filepath, sequence_array)
